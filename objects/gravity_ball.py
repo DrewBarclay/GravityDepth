@@ -53,10 +53,26 @@ class GravityBall(GameObject):
 
         # Only apply attraction within range
         if distance <= self.attraction_radius and distance > 0:
-            # Normalize direction and calculate force strength (stronger when closer)
+            # Set the raindrop's gravity field flag if it's a RainDrop
+            if hasattr(obj, 'in_gravity_field'):
+                obj.in_gravity_field = True
+
+            # Normalize direction and calculate force strength
             direction = direction.normalize()
-            # Use inverse-linear relationship for more predictable attraction
-            strength = self.attraction_force * (1 - (distance / self.attraction_radius)) * dt
+
+            # Calculate force strength with a modified gravity model
+            # Normal gravity is the same as before, but past a certain point (close to center),
+            # it starts to decrease to simulate entering the "core" of a planet
+            core_radius = self.radius * 1.5  # The "core" radius where gravity starts to decrease
+
+            if distance < core_radius:
+                # Inside the core, gravity reduces as you get closer to center
+                # Approaches zero at the very center
+                core_factor = distance / core_radius  # 0 at center, 1 at core boundary
+                strength = self.attraction_force * (1 - (distance / self.attraction_radius)) * core_factor * dt
+            else:
+                # Outside the core, use the original gravity formula
+                strength = self.attraction_force * (1 - (distance / self.attraction_radius)) * dt
 
             # Apply attraction directly to velocity
             obj.velocity += direction * strength

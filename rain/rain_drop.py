@@ -38,6 +38,8 @@ class RainDrop(GameObject):
         self.tied_to = None
         self.tied_to_last_pos = None
         self.relative_position = Vector2(0, 0)
+        # Flag to track if raindrop is affected by a gravity ball
+        self.in_gravity_field = False
 
         # Set a custom line-shaped collision polygon for the raindrop
         self.set_collision_polygon([
@@ -62,10 +64,18 @@ class RainDrop(GameObject):
             # Update the last position for next frame
             self.tied_to_last_pos = current_obj_pos.copy()
 
-        # Only apply gravity if NOT colliding with objects
+        # Only apply gravity if NOT colliding with objects and NOT in a gravity field
         if not self.colliding_objects:
-            # Apply both gravity and wind acceleration
-            self.acceleration = (GRAVITY_ACCELERATION + self.wind_acceleration) * dt
+            # Apply wind acceleration always
+            wind_acc = self.wind_acceleration * dt
+
+            # Only apply gravity if not in a gravity field
+            if not self.in_gravity_field:
+                # Apply both gravity and wind acceleration
+                self.acceleration = (GRAVITY_ACCELERATION + self.wind_acceleration) * dt
+            else:
+                # Only apply wind, no gravity when in a gravity field
+                self.acceleration = wind_acc
 
             DAMPING_FORCE = (self.velocity.length() ** 2 * RAIN_AIR_FRICTION) * dt
             # Apply damping force proprotionate on x and y
@@ -94,6 +104,9 @@ class RainDrop(GameObject):
             # Apply strong repulsion forces from all colliding objects
             for obj in self.colliding_objects:
                 self.acceleration += self.get_repulsion_force(obj, dt)
+
+        # Reset the gravity field flag for next frame
+        self.in_gravity_field = False
 
         # Update position
         super().update(dt)
