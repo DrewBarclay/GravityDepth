@@ -1,11 +1,11 @@
 import pytest
 from pygame.math import Vector2
-from rain_drop import RainDrop
-from rain_system import RainSystem
-from game_object import GameObject
+from rain.rain_drop import RainDrop
+from rain.rain_system import RainSystem
+from objects.game_object import GameObject
 from game import Player
 import pygame
-from raindrop_constants import (
+from rain.raindrop_constants import (
     DEFAULT_VELOCITY_Y,
     GRAVITY_ACCELERATION,
     MAX_VELOCITY_MAGNITUDE,

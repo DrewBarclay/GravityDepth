@@ -1,9 +1,9 @@
 import pytest
 import pygame
 from unittest.mock import MagicMock, patch
-from game_engine import GameEngine
-from game_object import GameObject
-from renderer import Renderer
+from engine.game_engine import GameEngine
+from objects.game_object import GameObject
+from engine.renderer import Renderer
 
 # Mock for pygame modules
 @pytest.fixture(autouse=True)

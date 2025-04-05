@@ -1,4 +1,4 @@
-from rain_drop import RainDrop
+from rain.rain_drop import RainDrop
 import random
 import pygame
 from pygame.math import Vector2

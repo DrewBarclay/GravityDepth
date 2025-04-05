@@ -1,6 +1,6 @@
 import pygame
 from typing import List, Dict, Any, Optional
-from game_object import GameObject
+from objects.game_object import GameObject
 
 class Renderer:
     """Handles all rendering logic for the game"""

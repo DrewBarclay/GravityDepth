@@ -1,8 +1,8 @@
 import pytest
 import pygame
 from pygame.math import Vector2
-from gravity_ball import GravityBall, GravityBallSystem
-from game_object import GameObject
+from objects.gravity_ball import GravityBall, GravityBallSystem
+from objects.game_object import GameObject
 
 class TestObject(GameObject):
     """Test object class for testing gravity ball interaction"""

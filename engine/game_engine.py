@@ -1,9 +1,9 @@
 import pygame
 from typing import List, Dict, Type, Optional
-from game_object import GameObject
-from renderer import Renderer
-from rain_system import RainSystem
-from gravity_ball import GravityBallSystem
+from objects.game_object import GameObject
+from engine.renderer import Renderer
+from rain.rain_system import RainSystem
+from objects.gravity_ball import GravityBallSystem
 
 class GameEngine:
     """Basic game engine for managing game objects and game state"""

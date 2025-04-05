@@ -1,7 +1,7 @@
 import pygame
 import numpy as np
 from typing import Tuple, Optional, List
-from advanced_polygon_utils import create_circle_polygon, create_rect_polygon, combine_polygons
+from utils.advanced_polygon_utils import create_circle_polygon, create_rect_polygon, combine_polygons
 
 class CharacterSprite:
     """Class for generating and rendering a hooded figure character"""

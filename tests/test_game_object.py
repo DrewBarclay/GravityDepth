@@ -1,6 +1,6 @@
 import pytest
 import pygame
-from game_object import GameObject
+from objects.game_object import GameObject
 
 @pytest.fixture
 def game_object():

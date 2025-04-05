@@ -1,8 +1,8 @@
 import pygame
-from game_engine import GameEngine
-from game_object import GameObject
-from character_sprite import CharacterSprite
-from advanced_polygon_utils import draw_polygon
+from engine.game_engine import GameEngine
+from objects.game_object import GameObject
+from sprites.player.character_sprite import CharacterSprite
+from utils.advanced_polygon_utils import draw_polygon
 
 # Initialize Pygame
 pygame.init()

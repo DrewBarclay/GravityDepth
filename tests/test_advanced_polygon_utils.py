@@ -1,7 +1,7 @@
 import pytest
 import pygame
 import numpy as np
-from advanced_polygon_utils import (
+from utils.advanced_polygon_utils import (
     create_circle_polygon,
     create_rect_polygon,
     combine_polygons,

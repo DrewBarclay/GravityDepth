@@ -1,6 +1,6 @@
 import pygame
 from typing import Tuple, Optional, Dict, Any, List
-from advanced_polygon_utils import polygons_collide, create_rect_polygon
+from utils.advanced_polygon_utils import polygons_collide, create_rect_polygon
 
 class GameObject:
     """Base class for all game objects with physics and state, but no rendering"""

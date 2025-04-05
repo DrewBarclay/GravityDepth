@@ -1,8 +1,8 @@
-from game_object import GameObject
+from objects.game_object import GameObject
 from pygame.math import Vector2
 import random
 import pygame
-from raindrop_constants import (
+from rain.raindrop_constants import (
     DEFAULT_VELOCITY_Y,
     GRAVITY_ACCELERATION,
     MAX_VELOCITY_MAGNITUDE,
