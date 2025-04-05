@@ -3,6 +3,7 @@ from typing import List, Dict, Type, Optional
 from game_object import GameObject
 from renderer import Renderer
 from rain_system import RainSystem
+from gravity_ball import GravityBallSystem
 
 class GameEngine:
     """Basic game engine for managing game objects and game state"""
@@ -16,6 +17,12 @@ class GameEngine:
 
         # Initialize rain system
         self.rain_system = RainSystem(width, height)
+
+        # Initialize gravity ball system
+        self.gravity_ball_system = GravityBallSystem()
+
+        # Mouse state variables
+        self.mouse_pressed = False
 
     def add_object(self, obj: GameObject) -> None:
         """Add a game object to the engine"""
@@ -37,6 +44,9 @@ class GameEngine:
         # Update rain system
         self.rain_system.update(dt, self.game_objects)
 
+        # Update gravity ball system
+        self.gravity_ball_system.update(dt, self.game_objects)
+
     def draw(self) -> None:
         """Draw all game objects"""
         self.renderer.clear(self.renderer.colors['black'])
@@ -48,6 +58,9 @@ class GameEngine:
         # Draw rain
         self.rain_system.draw(self.renderer.get_screen())
 
+        # Draw gravity balls
+        self.gravity_ball_system.draw(self.renderer.get_screen())
+
         self.renderer.update()
 
     def handle_events(self) -> bool:
@@ -58,6 +71,16 @@ class GameEngine:
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     return False
+            # Handle mouse button events
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # Left mouse button
+                    self.mouse_pressed = True
+                    # Create a gravity ball at the mouse position
+                    mouse_x, mouse_y = pygame.mouse.get_pos()
+                    self.gravity_ball_system.create_gravity_ball(mouse_x, mouse_y)
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1:  # Left mouse button
+                    self.mouse_pressed = False
         return True
 
     def handle_input(self) -> None:
