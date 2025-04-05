@@ -3,6 +3,7 @@ from engine.game_engine import GameEngine
 from objects.game_object import GameObject
 from sprites.player.character_sprite import CharacterSprite
 from utils.advanced_polygon_utils import draw_polygon
+from objects.level import Level
 
 # Initialize Pygame
 pygame.init()
@@ -123,19 +124,13 @@ class Player(GameObject):
 def main():
     print("Starting game")
     # Create game engine
-    engine = GameEngine(800, 600, "Arrow Key Movement Demo")
+    engine = GameEngine(800, 600, "Level-Based Game")
     print("Game engine created")
 
-    # Create player at center of screen
-    width, height = engine.get_dimensions()
-    print(f"Screen dimensions: {width}x{height}")
-    player = Player(width//2 - 25, height//2 - 25)
-    # Set screen dimensions for wall detection
-    player.screen_width = width
-    player.screen_height = height
-    print("Player created")
-    engine.add_object(player)
-    print("Player added to engine")
+    # Create the first level (1-1)
+    level = Level(engine, 1, 1)
+    engine.current_level = level
+    print("Level 1-1 created")
 
     # Start the game engine
     print("Starting game engine")

@@ -4,6 +4,7 @@ from objects.game_object import GameObject
 from engine.renderer import Renderer
 from rain.rain_system import RainSystem
 from objects.gravity_ball import GravityBallSystem
+from objects.portal import Portal
 
 class GameEngine:
     """Basic game engine for managing game objects and game state"""
@@ -24,6 +25,10 @@ class GameEngine:
         # Mouse state variables
         self.mouse_pressed = False
 
+        # Level management
+        self.current_level = None
+        self.font = pygame.font.SysFont('Arial', 24)
+
     def add_object(self, obj: GameObject) -> None:
         """Add a game object to the engine"""
         self.game_objects.append(obj)
@@ -35,7 +40,20 @@ class GameEngine:
 
     def update(self, dt: float) -> None:
         """Update all game objects"""
-        for obj in self.game_objects[:]:  # Copy list to allow removal during iteration
+        # Create a copy of the objects for iteration
+        objects_to_process = self.game_objects.copy()
+
+        # Check for player-portal collisions
+        if self.current_level:
+            player = self.current_level.player
+            portal = self.current_level.portal
+
+            if player and portal and player.collides_with(portal):
+                # Player has entered the portal, go to next level
+                self.current_level.next_level()
+
+        # Process removals and updates
+        for obj in objects_to_process:
             if obj.marked_for_removal:
                 self.remove_object(obj)
             else:
@@ -60,6 +78,13 @@ class GameEngine:
 
         # Draw gravity balls
         self.gravity_ball_system.draw(self.renderer.get_screen())
+
+        # Draw level text in top right corner
+        if self.current_level:
+            level_text = f"{self.current_level.world_number}-{self.current_level.level_number}"
+            text_surface = self.font.render(level_text, True, (255, 255, 255))
+            text_rect = text_surface.get_rect(topright=(self.renderer.width - 20, 20))
+            self.renderer.get_screen().blit(text_surface, text_rect)
 
         self.renderer.update()
 
