@@ -39,6 +39,14 @@ class RainDrop(GameObject):
         self.tied_to_last_pos = None
         self.relative_position = Vector2(0, 0)
 
+        # Set a custom line-shaped collision polygon for the raindrop
+        self.set_collision_polygon([
+            (0, 0),  # Top point
+            (DEFAULT_WIDTH, 0),  # Top right
+            (DEFAULT_WIDTH, self.length),  # Bottom right
+            (0, self.length)  # Bottom left
+        ])
+
     def update(self, dt):
         # If tied to an object, update position based on object movement
         if self.tied_to:
@@ -123,12 +131,8 @@ class RainDrop(GameObject):
             if obj is self:
                 continue
 
-            # Test if we're actually colliding
-            # Use Rect objects to test collision
-            raindrop_rect = pygame.Rect(self.x, self.y, self.width, self.length)
-            obj_rect = pygame.Rect(obj.x, obj.y, obj.width, obj.height)
-
-            if raindrop_rect.colliderect(obj_rect):
+            # Use polygon-based collision detection
+            if self.collides_with(obj):
                 currently_colliding.add(obj)
 
                 # If we're not already tied to an object, tie to this one
@@ -171,7 +175,7 @@ class RainDrop(GameObject):
         if repulsion_dir.length() > 0:
             repulsion_dir = repulsion_dir.normalize()
 
-            # Calculate how deep into the object we are
+            # Use the rect for depth calculation as an approximation
             # Create rectangle for the object
             obj_rect = pygame.Rect(obj.x, obj.y, obj.width, obj.height)
 
@@ -201,12 +205,6 @@ class RainDrop(GameObject):
     def apply_repulsion_force(self, obj, dt):
         """Legacy method for tests - redirects to get_repulsion_force"""
         return self.get_repulsion_force(obj, dt)
-
-    def collides_with(self, other):
-        """Check if this object collides with another"""
-        raindrop_rect = pygame.Rect(self.x, self.y, self.width, self.length)
-        other_rect = pygame.Rect(other.x, other.y, other.width, other.height)
-        return raindrop_rect.colliderect(other_rect)
 
     def draw(self, surface):
         # Draw a line from the current position downward based on velocity

@@ -1,5 +1,6 @@
 import pygame
-from typing import Tuple, Optional, Dict, Any
+from typing import Tuple, Optional, Dict, Any, List
+from polygon_utils import polygons_collide, generate_polygon_from_rect
 
 class GameObject:
     """Base class for all game objects with physics and state, but no rendering"""
@@ -11,6 +12,24 @@ class GameObject:
         self.velocity = pygame.math.Vector2(0, 0)
         self.acceleration = pygame.math.Vector2(0, 0)
         self.properties: Dict[str, Any] = {}
+        # Initialize polygon as None, will be set by subclasses or default to rect
+        self._collision_polygon: Optional[List[Tuple[float, float]]] = None
+
+    @property
+    def collision_polygon(self) -> List[Tuple[float, float]]:
+        """Get the collision polygon for this object.
+        If not set, generates a rectangle polygon from the object's dimensions."""
+        if self._collision_polygon is None:
+            # Default to rectangle if no custom polygon is set
+            self._collision_polygon = generate_polygon_from_rect(self.get_rect())
+
+        # Apply the position offset to the polygon points
+        return [(self.x + point[0], self.y + point[1]) for point in self._collision_polygon]
+
+    def set_collision_polygon(self, polygon: List[Tuple[float, float]]) -> None:
+        """Set a custom collision polygon for this object.
+        The provided polygon should be in local coordinates (relative to the object's position)."""
+        self._collision_polygon = polygon
 
     def update(self, dt: float) -> None:
         """Update object physics"""
@@ -39,8 +58,13 @@ class GameObject:
         return pygame.Rect(self.x, self.y, self.width, self.height)
 
     def collides_with(self, other: 'GameObject') -> bool:
-        """Check if this object collides with another object"""
-        return self.get_rect().colliderect(other.get_rect())
+        """Check if this object collides with another object using polygon collision detection"""
+        # First do a quick AABB check using rectangles for efficiency
+        if not self.get_rect().colliderect(other.get_rect()):
+            return False
+
+        # Then do precise polygon collision check
+        return polygons_collide(self.collision_polygon, other.collision_polygon)
 
     def get_property(self, key: str, default: Any = None) -> Any:
         """Get a property value"""

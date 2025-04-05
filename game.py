@@ -28,6 +28,13 @@ class Player(GameObject):
         self.color = (0, 0, 255)  # Blue color for the player
         self.character_sprite = CharacterSprite(width=50, height=50)
 
+        # Use the character sprite's collision polygon
+        self.set_collision_polygon(self.character_sprite.collision_polygon)
+
+        # Debug mode for showing collision polygon
+        self.debug_mode = False
+        self._last_d_state = False  # Store last state of D key
+
     def handle_input(self, keys: pygame.key.ScancodeWrapper) -> None:
         """Handle player input"""
         # Reset acceleration
@@ -43,9 +50,20 @@ class Player(GameObject):
         if keys[pygame.K_DOWN]:
             self.acceleration.y = self.movement_speed
 
+        # Toggle debug mode with 'D' key
+        if keys[pygame.K_d] and not self._last_d_state:
+            self.debug_mode = not self.debug_mode
+        self._last_d_state = keys[pygame.K_d]
+
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the player on the screen"""
         self.character_sprite.render(surface, (self.x, self.y))
+
+        # Draw collision polygon in debug mode
+        if self.debug_mode:
+            # Draw using the real collision points (which include position offset)
+            points = self.collision_polygon
+            pygame.draw.polygon(surface, (255, 0, 0), points, 1)
 
 def main():
     print("Starting game")

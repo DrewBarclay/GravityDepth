@@ -26,7 +26,8 @@ def test_input_handling(player):
         pygame.K_LEFT: False,
         pygame.K_RIGHT: False,
         pygame.K_UP: False,
-        pygame.K_DOWN: False
+        pygame.K_DOWN: False,
+        pygame.K_d: False  # Add D key for debug mode
     }
 
     # Test no movement when no keys pressed
