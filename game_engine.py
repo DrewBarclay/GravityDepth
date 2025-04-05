@@ -39,7 +39,7 @@ class GameEngine:
 
     def draw(self) -> None:
         """Draw all game objects"""
-        self.renderer.clear()
+        self.renderer.clear(self.renderer.colors['black'])
 
         # Draw game objects
         for obj in self.game_objects:

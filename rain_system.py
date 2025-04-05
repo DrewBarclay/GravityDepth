@@ -33,11 +33,11 @@ class RainSystem:
             # Apply wind as an acceleration, not direct velocity
             raindrop.wind_acceleration = Vector2(self.wind_force * 10, 0)  # Scale wind for better effect
 
-            # Update raindrop
-            raindrop.update(dt)
-
             # Check for collisions with game objects
             raindrop.check_and_handle_collisions(game_objects, dt)
+
+            # Update raindrop
+            raindrop.update(dt)
 
             # Mark for removal if below screen
             if raindrop.y > self.screen_height:

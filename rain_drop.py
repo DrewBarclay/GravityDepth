@@ -2,36 +2,41 @@ from game_object import GameObject
 from pygame.math import Vector2
 import random
 import pygame
+from raindrop_constants import (
+    DEFAULT_VELOCITY_Y,
+    DEFAULT_ACCELERATION,
+    MAX_VELOCITY_MAGNITUDE,
+    MAX_UPWARD_VELOCITY,
+    DEFAULT_WIDTH,
+    MIN_LENGTH,
+    MAX_LENGTH,
+    DEFAULT_COLOR,
+    REPULSION_FORCE,
+    COLLISION_VELOCITY_DAMPING,
+    DEPTH_REPULSION_MULTIPLIER
+)
 
 class RainDrop(GameObject):
     def __init__(self, x, y, wind_force=0):
         # Initialize with width=1 and height=length (will be set after super().__init__)
-        super().__init__(x, y, width=1, height=1)
+        super().__init__(x, y, width=DEFAULT_WIDTH, height=1)
         # Base velocity (falling down and slightly right)
-        self.velocity = Vector2(wind_force, 200.0)
-        self.acceleration = Vector2(0, 8000.0)  # Much stronger gravity
+        self.velocity = Vector2(wind_force, DEFAULT_VELOCITY_Y)
+        self.acceleration = DEFAULT_ACCELERATION  # Much stronger gravity
         self.wind_acceleration = Vector2(0, 0)  # Wind will be applied as acceleration
-        self.max_velocity_magnitude = 400.0  # Max velocity magnitude for limiting forces
-        self.max_upward_velocity = 200.0  # Max upward velocity for limiting forces
-        self.length = random.uniform(5, 15)
-        self.width = 1
-        self.color = (255, 0, 0)
-        self.repulsion_force = 8500.0  # Strong repulsion force for bouncing
+        self.max_velocity_magnitude = MAX_VELOCITY_MAGNITUDE  # Max velocity magnitude for limiting forces
+        self.max_upward_velocity = MAX_UPWARD_VELOCITY  # Max upward velocity for limiting forces
+        self.length = random.uniform(MIN_LENGTH, MAX_LENGTH)
+        self.width = DEFAULT_WIDTH
+        self.color = DEFAULT_COLOR
+        self.repulsion_force = REPULSION_FORCE  # Strong repulsion force for bouncing
         self.marked_for_removal = False
         # Keep track of objects we're currently colliding with
         self.colliding_objects = set()
 
     def update(self, dt):
-        # Check if we're in a test environment
-        import sys
-        in_test = any('pytest' in arg for arg in sys.argv)
-
-        # Special case for the gravity cycle test - allow gravity to eventually win
-        is_gravity_test = in_test and any(obj for obj in self.colliding_objects
-                                        if hasattr(obj, 'x') and obj.x == 100 and obj.y == 105)
-
-        # Only apply gravity if NOT colliding with objects OR this is the special gravity test case
-        if not self.colliding_objects or is_gravity_test:
+        # Only apply gravity if NOT colliding with objects
+        if not self.colliding_objects:
             # Apply both gravity and wind acceleration
             total_acceleration = self.acceleration + self.wind_acceleration
 
@@ -53,14 +58,11 @@ class RainDrop(GameObject):
             # Inside an object - cancel all velocity and apply strong upward force
 
             # Almost completely stop the raindrop
-            self.velocity *= 0.02  # 98% reduction - nearly stopping it
-
-            # GUARANTEED upward movement - very strong
-            self.velocity.y = -200  # Force strong upward velocity
+            self.velocity *= COLLISION_VELOCITY_DAMPING
 
             # Apply strong repulsion forces from all colliding objects
             for obj in self.colliding_objects:
-                self.force_out_of_object(obj)
+                self.apply_repulsion_force(obj, dt)
 
         # Update position
         super().update(dt)
@@ -91,10 +93,6 @@ class RainDrop(GameObject):
             force.y = limited_force.y
 
     def check_and_handle_collisions(self, game_objects, dt):
-        # Check if we're in the special test for gravity cycle
-        import sys
-        in_test = any('pytest' in arg for arg in sys.argv)
-
         # Check each object for collision
         currently_colliding = set()
 
@@ -110,72 +108,11 @@ class RainDrop(GameObject):
             if raindrop_rect.colliderect(obj_rect):
                 currently_colliding.add(obj)
 
-                # Special case for the gravity cycle test
-                is_gravity_test = in_test and hasattr(obj, 'x') and obj.x == 100 and obj.y == 105
-
-                if is_gravity_test:
-                    # Super simple approach for the gravity test - just apply a basic impulse
-                    # that will let gravity eventually win
-                    self.velocity = Vector2(0, -140)  # Simple upward impulse
-                elif in_test:
-                    # Other regular tests
-                    self.apply_strong_repulsion(obj)
-                else:
-                    # In gameplay mode - immediately reposition and apply velocity change
-                    self.force_out_of_object(obj)
-
         # Update the set of objects we're colliding with
         self.colliding_objects = currently_colliding
 
-    def force_out_of_object(self, obj):
-        """Forcibly reposition the raindrop out of the object and apply strong upward impulse"""
-        # Calculate direction from object center to raindrop
-        obj_center = Vector2(obj.x + obj.width/2, obj.y + obj.height/2)
-        my_pos = Vector2(self.x, self.y)
-
-        # Direction vector pointing away from the object's center
-        away_dir = my_pos - obj_center
-
-        # Only apply force if we have a non-zero direction
-        if away_dir.length() > 0:
-            away_dir = away_dir.normalize()
-
-            # Always have a strong upward component
-            away_dir.y = min(away_dir.y, -0.5)  # At least 50% upward
-            away_dir = away_dir.normalize()
-
-            # Calculate distance to edge of object to ensure repositioning works correctly
-            edge_distance = 0
-            # Approximate the distance to push outside
-            if away_dir.x < 0:  # Moving left
-                edge_distance = max(edge_distance, abs(self.x - obj.x))
-            elif away_dir.x > 0:  # Moving right
-                edge_distance = max(edge_distance, abs(self.x - (obj.x + obj.width)))
-
-            if away_dir.y < 0:  # Moving up
-                edge_distance = max(edge_distance, abs(self.y - obj.y))
-            elif away_dir.y > 0:  # Moving down
-                edge_distance = max(edge_distance, abs(self.y - (obj.y + obj.height)))
-
-            # Ensure minimum push distance
-            push_distance = max(edge_distance + 5, 20)
-
-            # DIRECTLY reposition the raindrop outside the object
-            self.x += away_dir.x * push_distance
-            self.y += away_dir.y * push_distance
-
-            # Completely reset velocity to ensure control
-            self.velocity = Vector2(0, 0)
-
-            # Apply a strong upward impulse
-            self.velocity = away_dir * 200
-
-            # Ensure the upward component is always strong
-            if self.velocity.y > -100:  # If not strongly upward
-                self.velocity.y = -100   # Force strongly upward
-
     def apply_repulsion_force(self, obj, dt):
-        """Apply a strong repulsion force to exit the object"""
+        """Apply a strong repulsion force to exit the object, stronger the deeper inside"""
         # Calculate direction from object center to raindrop
         obj_center = Vector2(obj.x + obj.width/2, obj.y + obj.height/2)
         my_pos = Vector2(self.x, self.y)
@@ -187,51 +124,26 @@ class RainDrop(GameObject):
         if repulsion_dir.length() > 0:
             repulsion_dir = repulsion_dir.normalize()
 
-            # Ensure direction is strongly upward
-            repulsion_dir.y = min(repulsion_dir.y, -0.7)  # At least 70% upward
-            repulsion_dir = repulsion_dir.normalize()
+            # Calculate how deep into the object we are
+            # Create rectangle for the object
+            obj_rect = pygame.Rect(obj.x, obj.y, obj.width, obj.height)
 
-            # Create strong force in the exit direction
-            repulsion_force = repulsion_dir * 10000.0 * dt
+            # Find the nearest point on the edge of the rectangle to the center
+            edge_x = max(obj_rect.left, min(my_pos.x, obj_rect.right))
+            edge_y = max(obj_rect.top, min(my_pos.y, obj_rect.bottom))
+            edge_point = Vector2(edge_x, edge_y)
+
+            # Calculate distance from current position to the edge (depth)
+            depth = max(1.0, (edge_point - my_pos).length())
+
+            # Scale repulsion force based on depth - deeper means stronger force
+            depth_multiplier = 1.0 + (depth * DEPTH_REPULSION_MULTIPLIER)
+
+            # Create strong force in the exit direction, scaled by depth
+            repulsion_force = repulsion_dir * self.repulsion_force * depth_multiplier * dt
 
             # Apply the repulsion force
             self.velocity += repulsion_force
-
-            # Hard cap velocity to ensure control
-            if self.velocity.length() > 250:
-                self.velocity = self.velocity.normalize() * 250
-
-    def apply_strong_repulsion(self, obj):
-        """Apply a strong repulsion force - used mainly for tests"""
-        # Calculate vector from object center to raindrop
-        obj_center = Vector2(obj.x + obj.width/2, obj.y + obj.height/2)
-        my_pos = Vector2(self.x, self.y)
-
-        # Direction vector pointing away from the object's center
-        repulsion_dir = my_pos - obj_center
-
-        # Only apply force if we have a non-zero direction
-        if repulsion_dir.length() > 0:
-            repulsion_dir = repulsion_dir.normalize()
-
-            # For near-horizontal collisions, ensure upward component
-            if abs(repulsion_dir.y) < 0.2:
-                repulsion_dir.y -= 0.8  # Stronger upward component
-                repulsion_dir = repulsion_dir.normalize()
-
-            # Apply strong repulsion force but scale to respect velocity limits
-            self.velocity *= 0.05  # Strong energy loss
-
-            # For tests: Apply a moderate impulse that allows gravity to eventually overcome it
-            # This is SPECIFICALLY to make tests pass that check gravity eventually overcomes the upward motion
-            upward_impulse = self.max_upward_velocity * 0.7  # 70% of max upward velocity
-            self.velocity = Vector2(repulsion_dir.x * upward_impulse, -upward_impulse)
-
-    def handle_collision(self, other):
-        # This is for backward compatibility
-        # Real collision handling is now done in check_and_handle_collisions
-        # But for direct calls, use the strong repulsion to ensure tests pass
-        self.apply_strong_repulsion(other)
 
     def collides_with(self, other):
         """Check if this object collides with another"""
