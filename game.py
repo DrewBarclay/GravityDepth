@@ -1,6 +1,7 @@
 import pygame
 from game_engine import GameEngine
 from game_object import GameObject
+from character_sprite import CharacterSprite
 
 # Initialize Pygame
 pygame.init()
@@ -25,6 +26,7 @@ class Player(GameObject):
         self.set_property('type', 'player')  # For custom rendering
         self.marked_for_removal = False  # Add marked_for_removal attribute
         self.color = (0, 0, 255)  # Blue color for the player
+        self.character_sprite = CharacterSprite(width=50, height=50)
 
     def handle_input(self, keys: pygame.key.ScancodeWrapper) -> None:
         """Handle player input"""
@@ -43,7 +45,7 @@ class Player(GameObject):
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the player on the screen"""
-        pygame.draw.rect(surface, self.color, self.get_rect())
+        self.character_sprite.render(surface, (self.x, self.y))
 
 def main():
     print("Starting game")

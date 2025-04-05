@@ -89,6 +89,13 @@ def test_movement_physics(player):
 def test_draw(player):
     """Test player drawing"""
     surface = pygame.Surface((200, 200))
+    # Save the surface state before drawing
+    before_pixels = pygame.surfarray.array3d(surface).copy()
     player.draw(surface)
-    color = surface.get_at((100, 100))[:3]  # Ignore alpha channel
-    assert color == player.color
+    # Get surface state after drawing
+    after_pixels = pygame.surfarray.array3d(surface)
+    # Check that something was drawn (pixels changed)
+    assert not (before_pixels == after_pixels).all()
+    # Check that the sprite renders at the player's position
+    pixel_at_player_pos = surface.get_at((int(player.x + 25), int(player.y + 25)))
+    assert pixel_at_player_pos[3] > 0  # Check that alpha channel has a value (pixel is not transparent)

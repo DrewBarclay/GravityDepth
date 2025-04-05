@@ -34,8 +34,26 @@ class RainDrop(GameObject):
         self.marked_for_removal = False
         # Keep track of objects we're currently colliding with
         self.colliding_objects = set()
+        # Track object the raindrop is tied to and its last position
+        self.tied_to = None
+        self.tied_to_last_pos = None
+        self.relative_position = Vector2(0, 0)
 
     def update(self, dt):
+        # If tied to an object, update position based on object movement
+        if self.tied_to:
+            current_obj_pos = Vector2(self.tied_to.x, self.tied_to.y)
+
+            # If the object has moved, adjust our position by the same amount
+            if self.tied_to_last_pos:
+                obj_movement = current_obj_pos - self.tied_to_last_pos
+                # Apply the object's movement to our position
+                self.x += obj_movement.x
+                self.y += obj_movement.y
+
+            # Update the last position for next frame
+            self.tied_to_last_pos = current_obj_pos.copy()
+
         # Only apply gravity if NOT colliding with objects
         if not self.colliding_objects:
             # Apply both gravity and wind acceleration
@@ -43,7 +61,8 @@ class RainDrop(GameObject):
 
             DAMPING_FORCE = (self.velocity.length() ** 2 * RAIN_AIR_FRICTION) * dt
             # Apply damping force proprotionate on x and y
-            self.acceleration -= DAMPING_FORCE * self.velocity.normalize()
+            if self.velocity.length() > 0:  # Check for zero length
+                self.acceleration -= DAMPING_FORCE * self.velocity.normalize()
 
             # Apply acceleration with small random variation for more natural motion
             variation = Vector2(
@@ -61,7 +80,8 @@ class RainDrop(GameObject):
             # Simplify to v^2 * constant
             DAMPING_FORCE = (self.velocity.length() ** 2 * RAIN_COLLISION_FRICTION) * dt
             # Apply damping force proprotionate on x and y
-            self.acceleration -= DAMPING_FORCE * self.velocity.normalize()
+            if self.velocity.length() > 0:  # Check for zero length
+                self.acceleration -= DAMPING_FORCE * self.velocity.normalize()
 
             # Apply strong repulsion forces from all colliding objects
             for obj in self.colliding_objects:
@@ -111,8 +131,32 @@ class RainDrop(GameObject):
             if raindrop_rect.colliderect(obj_rect):
                 currently_colliding.add(obj)
 
-        # Update the set of objects we're colliding with
+                # If we're not already tied to an object, tie to this one
+                if not self.tied_to:
+                    self.tie_to_object(obj)
+
+        # If we were colliding but aren't anymore, untie
+        if self.tied_to and self.tied_to not in currently_colliding:
+            self.untie_from_object()
+
+        # Update the set of objects we're currently colliding with
         self.colliding_objects = currently_colliding
+
+    def tie_to_object(self, obj):
+        """Tie this raindrop to a game object"""
+        self.tied_to = obj
+        # Store the object's current position
+        self.tied_to_last_pos = Vector2(obj.x, obj.y)
+        # We don't stop movement completely anymore
+        # Instead, reduce velocity to simulate sticking to the object
+        self.velocity *= 0.1
+
+    def untie_from_object(self):
+        """Untie this raindrop from its object"""
+        self.tied_to = None
+        self.tied_to_last_pos = None
+        # Give the raindrop a small random velocity
+        self.velocity = Vector2(random.uniform(-20, 20), random.uniform(50, 100))
 
     def get_repulsion_force(self, obj, dt):
         """Apply a strong repulsion force to exit the object, stronger the deeper inside"""
@@ -154,6 +198,10 @@ class RainDrop(GameObject):
             return repulsion_force
         return Vector2(0, 0)
 
+    def apply_repulsion_force(self, obj, dt):
+        """Legacy method for tests - redirects to get_repulsion_force"""
+        return self.get_repulsion_force(obj, dt)
+
     def collides_with(self, other):
         """Check if this object collides with another"""
         raindrop_rect = pygame.Rect(self.x, self.y, self.width, self.length)
@@ -172,5 +220,8 @@ class RainDrop(GameObject):
         if self.colliding_objects:
             # Brighter red when inside an object
             draw_color = (255, 100, 100)
+        elif self.tied_to:
+            # Different color when tied to an object
+            draw_color = (150, 150, 255)
 
-        pygame.draw.line(surface, draw_color, (int(self.x), int(self.y)), end_pos, 1)
+        pygame.draw.line(surface, draw_color, (int(self.x), int(self.y)), end_pos, self.width)
