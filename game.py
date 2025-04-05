@@ -39,6 +39,35 @@ class Player(GameObject):
         self.debug_mode = False
         self._last_d_state = False  # Store last state of D key
 
+        # Store screen dimensions for wall detection
+        self.screen_width = WINDOW_WIDTH
+        self.screen_height = WINDOW_HEIGHT
+
+    def update(self, dt: float) -> None:
+        """Update player physics and handle wall bouncing"""
+        # Call the parent class update method to update position
+        super().update(dt)
+
+        # Check collision with the left and right walls
+        if self.x <= 0:
+            # Left wall collision
+            self.x = 0
+            self.velocity.x = -self.velocity.x  # Reverse horizontal velocity
+        elif self.x + self.width >= self.screen_width:
+            # Right wall collision
+            self.x = self.screen_width - self.width
+            self.velocity.x = -self.velocity.x  # Reverse horizontal velocity
+
+        # Check collision with the top and bottom walls
+        if self.y <= 0:
+            # Top wall collision
+            self.y = 0
+            self.velocity.y = -self.velocity.y  # Reverse vertical velocity
+        elif self.y + self.height >= self.screen_height:
+            # Bottom wall collision
+            self.y = self.screen_height - self.height
+            self.velocity.y = -self.velocity.y  # Reverse vertical velocity
+
     def handle_input(self, keys: pygame.key.ScancodeWrapper) -> None:
         """Handle player input"""
         # Reset acceleration
@@ -101,6 +130,9 @@ def main():
     width, height = engine.get_dimensions()
     print(f"Screen dimensions: {width}x{height}")
     player = Player(width//2 - 25, height//2 - 25)
+    # Set screen dimensions for wall detection
+    player.screen_width = width
+    player.screen_height = height
     print("Player created")
     engine.add_object(player)
     print("Player added to engine")
