@@ -2,6 +2,7 @@ import pygame
 from game_engine import GameEngine
 from game_object import GameObject
 from character_sprite import CharacterSprite
+from advanced_polygon_utils import draw_polygon
 
 # Initialize Pygame
 pygame.init()
@@ -17,6 +18,9 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
+GREEN = (0, 255, 0)
+YELLOW = (255, 255, 0)
+PURPLE = (200, 100, 255)
 
 class Player(GameObject):
     """Player class extending the base GameObject"""
@@ -57,13 +61,35 @@ class Player(GameObject):
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the player on the screen"""
+        # First draw the character
         self.character_sprite.render(surface, (self.x, self.y))
 
-        # Draw collision polygon in debug mode
+        # Draw collision polygons in debug mode
         if self.debug_mode:
-            # Draw using the real collision points (which include position offset)
-            points = self.collision_polygon
-            pygame.draw.polygon(surface, (255, 0, 0), points, 1)
+            # Get debug polygons in world coordinates
+            debug_polygons = self.character_sprite.get_debug_polygons((self.x, self.y))
+
+            # Create a semi-transparent surface for fills
+            s = pygame.Surface((surface.get_width(), surface.get_height()), pygame.SRCALPHA)
+
+            # Draw body polygon (blue)
+            draw_polygon(s, debug_polygons['body'], (0, 0, 255, 40), 0)  # Fill with transparent blue
+            draw_polygon(surface, debug_polygons['body'], BLUE, 2)  # Blue outline
+
+            # Draw hood polygon (purple)
+            draw_polygon(s, debug_polygons['hood'], (200, 0, 255, 40), 0)  # Fill with transparent purple
+            draw_polygon(surface, debug_polygons['hood'], PURPLE, 2)  # Purple outline
+
+            # Draw combined polygon (yellow)
+            draw_polygon(s, debug_polygons['combined'], (255, 255, 0, 40), 0)  # Fill with transparent yellow
+            draw_polygon(surface, debug_polygons['combined'], YELLOW, 2)  # Yellow outline
+
+            # Add the transparent fills to the main surface
+            surface.blit(s, (0, 0))
+
+            # Draw points at each vertex of the combined polygon
+            for point in debug_polygons['combined']:
+                pygame.draw.circle(surface, GREEN, (int(point[0]), int(point[1])), 3)  # Green dots
 
 def main():
     print("Starting game")

@@ -1,6 +1,7 @@
 import pygame
 import numpy as np
 from typing import Tuple, Optional, List
+from advanced_polygon_utils import create_circle_polygon, create_rect_polygon, combine_polygons
 
 class CharacterSprite:
     """Class for generating and rendering a hooded figure character"""
@@ -12,40 +13,57 @@ class CharacterSprite:
         self.hood_color = (50, 50, 90)  # Darker shade for hood
         self.face_color = (20, 20, 30)  # Dark void for face
         self.surface = self.generate_sprite()
-        self.collision_polygon = self.generate_collision_polygon()
 
-    def generate_collision_polygon(self) -> List[Tuple[float, float]]:
-        """Generate a collision polygon that matches the character's shape"""
+        # Generate body and hood polygons separately
+        self.body_polygon = self.generate_body_polygon()
+        self.hood_polygon = self.generate_hood_polygon()
+
+        # Store the raw polygons for debugging
+        self._raw_hood = self.hood_polygon
+        self._raw_body = self.body_polygon
+
+        # Combine them to form the full collision polygon
+        # Use combine_polygons for proper convex hull generation
+        self.collision_polygon = combine_polygons([self.body_polygon, self.hood_polygon])
+
+    def generate_body_polygon(self) -> List[Tuple[float, float]]:
+        """Generate a polygon for the body/robe part of the character"""
         # Body dimensions
         body_width = int(self.width * 0.8)
         body_height = int(self.height * 0.6)
         body_x = (self.width - body_width) // 2
         body_y = self.height - body_height
 
+        # Create rectangular polygon for the body
+        return create_rect_polygon((body_x, body_y, body_width, body_height))
+
+    def generate_hood_polygon(self) -> List[Tuple[float, float]]:
+        """Generate a polygon for the hood/head part of the character"""
         # Hood/head dimensions
         hood_radius = int(self.width * 0.4)
         hood_center_x = self.width // 2
-        hood_center_y = body_y
+        hood_center_y = self.height - int(self.height * 0.6)  # Same as body_y
 
-        # Create a polygon that approximates the character's shape
-        # We'll use about 10 points to create a fairly accurate polygon
-        polygon = []
+        # Create a full elliptical polygon to completely encapsulate the hood
+        hood_polygon = []
 
-        # Top of the hood (semi-circle approximation with 5 points)
-        # We'll use points at angles 180, 135, 90, 45, and 0 degrees
-        for angle_deg in range(180, -1, -45):
-            angle_rad = np.radians(angle_deg)
-            x = hood_center_x + int(hood_radius * np.cos(angle_rad))
-            y = hood_center_y + int(hood_radius * np.sin(angle_rad))
-            polygon.append((x, y))
+        # Use an ellipse that's wider than it is tall to better match the hood shape
+        ellipse_width = hood_radius * 2.1  # Make it wider than the hood
+        ellipse_height = hood_radius * 1.7  # Make it tall enough to cover the hood
 
-        # Bottom right of robe
-        polygon.append((body_x + body_width, self.height))
+        # Generate points around the full ellipse
+        num_points = 24  # More points for smoother shape
+        for i in range(num_points):
+            angle = np.radians(i * 360 / num_points)
+            # Parametric equation of ellipse
+            x = hood_center_x + (ellipse_width/2) * np.cos(angle)
+            y = hood_center_y + (ellipse_height/2) * np.sin(angle)
+            hood_polygon.append((x, y))
 
-        # Bottom left of robe
-        polygon.append((body_x, self.height))
+        # Close the polygon
+        hood_polygon.append(hood_polygon[0])
 
-        return polygon
+        return hood_polygon
 
     def generate_sprite(self) -> pygame.Surface:
         """Generate a hooded figure sprite"""
@@ -104,10 +122,15 @@ class CharacterSprite:
         """Get the sprite surface"""
         return self.surface
 
-    def draw_collision_polygon(self, surface: pygame.Surface, position: Tuple[float, float], color: Tuple[int, int, int] = (255, 0, 0)) -> None:
-        """Draw the collision polygon for debugging purposes"""
-        # Offset the polygon by the given position
-        offset_polygon = [(x + position[0], y + position[1]) for x, y in self.collision_polygon]
+    def get_debug_polygons(self, position: Tuple[float, float]) -> dict:
+        """Get all polygons with world positions for debugging"""
+        # Offset polygons by the given position
+        offset_body = [(x + position[0], y + position[1]) for x, y in self._raw_body]
+        offset_hood = [(x + position[0], y + position[1]) for x, y in self._raw_hood]
+        offset_combined = [(x + position[0], y + position[1]) for x, y in self.collision_polygon]
 
-        # Draw the polygon
-        pygame.draw.polygon(surface, color, offset_polygon, 1)
+        return {
+            'body': offset_body,
+            'hood': offset_hood,
+            'combined': offset_combined
+        }

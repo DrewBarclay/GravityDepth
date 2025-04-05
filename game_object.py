@@ -1,6 +1,6 @@
 import pygame
 from typing import Tuple, Optional, Dict, Any, List
-from polygon_utils import polygons_collide, generate_polygon_from_rect
+from advanced_polygon_utils import polygons_collide, create_rect_polygon
 
 class GameObject:
     """Base class for all game objects with physics and state, but no rendering"""
@@ -17,11 +17,11 @@ class GameObject:
 
     @property
     def collision_polygon(self) -> List[Tuple[float, float]]:
-        """Get the collision polygon for this object.
+        """Get the collision polygon for this object in world coordinates.
         If not set, generates a rectangle polygon from the object's dimensions."""
         if self._collision_polygon is None:
             # Default to rectangle if no custom polygon is set
-            self._collision_polygon = generate_polygon_from_rect(self.get_rect())
+            self._collision_polygon = create_rect_polygon((0, 0, self.width, self.height))
 
         # Apply the position offset to the polygon points
         return [(self.x + point[0], self.y + point[1]) for point in self._collision_polygon]
@@ -63,7 +63,7 @@ class GameObject:
         if not self.get_rect().colliderect(other.get_rect()):
             return False
 
-        # Then do precise polygon collision check
+        # Then do precise polygon collision check using the advanced polygon collision system
         return polygons_collide(self.collision_polygon, other.collision_polygon)
 
     def get_property(self, key: str, default: Any = None) -> Any:
