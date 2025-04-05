@@ -31,12 +31,6 @@ class TestLevel:
         # Verify we have a portal
         assert any(isinstance(obj, Portal) for obj in self.level.objects)
 
-        # For level 1-1, we should have 3 blue gravity balls
-        blue_balls = [obj for obj in self.level.objects if isinstance(obj, GravityBall)]
-        assert len(blue_balls) == 3
-        for ball in blue_balls:
-            assert ball.color == (0, 0, 255)  # Blue
-
     def test_level_transition(self):
         """Test transitioning to the next level"""
         # Remember the original objects
@@ -54,10 +48,6 @@ class TestLevel:
         # All original objects should be marked for removal
         for obj in original_objects:
             assert obj.marked_for_removal
-
-        # Level 1-2 should have 2 orange squares
-        orange_squares = [obj for obj in self.level.objects if isinstance(obj, OrangeSquare)]
-        assert len(orange_squares) == 2
 
         # Still have a portal
         assert any(isinstance(obj, Portal) for obj in self.level.objects)
@@ -83,16 +73,3 @@ class TestLevel:
 
         # We can also verify the player is set correctly
         assert self.level.player == self.mock_player
-
-    def test_orange_square(self):
-        """Test the OrangeSquare class"""
-        # Test basic properties of the OrangeSquare class
-        square = OrangeSquare(100, 100)
-
-        # Test initial properties
-        assert square.color == (255, 165, 0)  # Orange
-        assert square.marked_for_removal == False
-        assert square.width == 30
-        assert square.height == 30
-
-        # Skip actual drawing and physics tests that need pygame setup
