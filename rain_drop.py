@@ -4,7 +4,7 @@ import random
 import pygame
 from raindrop_constants import (
     DEFAULT_VELOCITY_Y,
-    DEFAULT_ACCELERATION,
+    GRAVITY_ACCELERATION,
     MAX_VELOCITY_MAGNITUDE,
     MAX_UPWARD_VELOCITY,
     DEFAULT_WIDTH,
@@ -12,21 +12,22 @@ from raindrop_constants import (
     MAX_LENGTH,
     DEFAULT_COLOR,
     REPULSION_FORCE,
-    COLLISION_VELOCITY_DAMPING,
-    DEPTH_REPULSION_MULTIPLIER
+    RAIN_COLLISION_FRICTION,
+    DEPTH_REPULSION_MULTIPLIER,
+    RAIN_AIR_FRICTION,
 )
 
 class RainDrop(GameObject):
     def __init__(self, x, y, wind_force=0):
         # Initialize with width=1 and height=length (will be set after super().__init__)
-        super().__init__(x, y, width=DEFAULT_WIDTH, height=1)
+        self.length = random.uniform(MIN_LENGTH, MAX_LENGTH)
+        super().__init__(x, y, width=DEFAULT_WIDTH, height=self.length)
         # Base velocity (falling down and slightly right)
         self.velocity = Vector2(wind_force, DEFAULT_VELOCITY_Y)
-        self.acceleration = DEFAULT_ACCELERATION  # Much stronger gravity
+        self.acceleration = GRAVITY_ACCELERATION  # Much stronger gravity
         self.wind_acceleration = Vector2(0, 0)  # Wind will be applied as acceleration
         self.max_velocity_magnitude = MAX_VELOCITY_MAGNITUDE  # Max velocity magnitude for limiting forces
         self.max_upward_velocity = MAX_UPWARD_VELOCITY  # Max upward velocity for limiting forces
-        self.length = random.uniform(MIN_LENGTH, MAX_LENGTH)
         self.width = DEFAULT_WIDTH
         self.color = DEFAULT_COLOR
         self.repulsion_force = REPULSION_FORCE  # Strong repulsion force for bouncing
@@ -38,7 +39,11 @@ class RainDrop(GameObject):
         # Only apply gravity if NOT colliding with objects
         if not self.colliding_objects:
             # Apply both gravity and wind acceleration
-            total_acceleration = self.acceleration + self.wind_acceleration
+            self.acceleration = (GRAVITY_ACCELERATION + self.wind_acceleration) * dt
+
+            DAMPING_FORCE = (self.velocity.length() ** 2 * RAIN_AIR_FRICTION) * dt
+            # Apply damping force proprotionate on x and y
+            self.acceleration -= DAMPING_FORCE * self.velocity.normalize()
 
             # Apply acceleration with small random variation for more natural motion
             variation = Vector2(
@@ -46,23 +51,21 @@ class RainDrop(GameObject):
                 random.uniform(-50, 50)
             )
 
-            # Compute the force to be applied
-            force = (total_acceleration + variation) * dt
-
-            # Limit the force if it would exceed velocity thresholds
-            self._limit_applied_force(force)
-
-            # Apply the force to velocity
-            self.velocity += force
+            self.acceleration += variation
         else:
             # Inside an object - cancel all velocity and apply strong upward force
+            self.acceleration = Vector2(0, 0)
 
             # Almost completely stop the raindrop
-            self.velocity *= COLLISION_VELOCITY_DAMPING
+            # Physics damping: 1/2 * p * v^2 * c_D * a
+            # Simplify to v^2 * constant
+            DAMPING_FORCE = (self.velocity.length() ** 2 * RAIN_COLLISION_FRICTION) * dt
+            # Apply damping force proprotionate on x and y
+            self.acceleration -= DAMPING_FORCE * self.velocity.normalize()
 
             # Apply strong repulsion forces from all colliding objects
             for obj in self.colliding_objects:
-                self.apply_repulsion_force(obj, dt)
+                self.acceleration += self.get_repulsion_force(obj, dt)
 
         # Update position
         super().update(dt)
@@ -111,7 +114,7 @@ class RainDrop(GameObject):
         # Update the set of objects we're colliding with
         self.colliding_objects = currently_colliding
 
-    def apply_repulsion_force(self, obj, dt):
+    def get_repulsion_force(self, obj, dt):
         """Apply a strong repulsion force to exit the object, stronger the deeper inside"""
         # Calculate direction from object center to raindrop
         obj_center = Vector2(obj.x + obj.width/2, obj.y + obj.height/2)
@@ -128,13 +131,18 @@ class RainDrop(GameObject):
             # Create rectangle for the object
             obj_rect = pygame.Rect(obj.x, obj.y, obj.width, obj.height)
 
-            # Find the nearest point on the edge of the rectangle to the center
-            edge_x = max(obj_rect.left, min(my_pos.x, obj_rect.right))
-            edge_y = max(obj_rect.top, min(my_pos.y, obj_rect.bottom))
-            edge_point = Vector2(edge_x, edge_y)
+            # For points inside the rectangle, we need to calculate the distance to the nearest edge
+            # Calculate distance to each edge
+            dist_left = self.x - obj_rect.left
+            dist_right = obj_rect.right - self.x
+            dist_top = self.y - obj_rect.top
+            dist_bottom = obj_rect.bottom - self.y
 
-            # Calculate distance from current position to the edge (depth)
-            depth = max(1.0, (edge_point - my_pos).length())
+            # Find the minimum distance to an edge (this is the actual depth)
+            depth = min(dist_left, dist_right, dist_top, dist_bottom)
+
+            # Ensure depth is positive and at least 1.0 for minimum effect
+            depth = max(1.0, depth)
 
             # Scale repulsion force based on depth - deeper means stronger force
             depth_multiplier = 1.0 + (depth * DEPTH_REPULSION_MULTIPLIER)
@@ -143,7 +151,8 @@ class RainDrop(GameObject):
             repulsion_force = repulsion_dir * self.repulsion_force * depth_multiplier * dt
 
             # Apply the repulsion force
-            self.velocity += repulsion_force
+            return repulsion_force
+        return Vector2(0, 0)
 
     def collides_with(self, other):
         """Check if this object collides with another"""

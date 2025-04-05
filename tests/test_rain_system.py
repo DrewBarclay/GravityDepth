@@ -7,7 +7,7 @@ from game import Player
 import pygame
 from raindrop_constants import (
     DEFAULT_VELOCITY_Y,
-    DEFAULT_ACCELERATION,
+    GRAVITY_ACCELERATION,
     MAX_VELOCITY_MAGNITUDE,
     MAX_UPWARD_VELOCITY,
     DEFAULT_WIDTH,
@@ -39,7 +39,7 @@ def test_raindrop_initialization(raindrop):
     assert raindrop.y == 100
     assert raindrop.velocity.y == DEFAULT_VELOCITY_Y
     assert raindrop.velocity.x == 0.0  # No initial wind
-    assert raindrop.acceleration == DEFAULT_ACCELERATION  # Much stronger gravity
+    assert raindrop.acceleration == GRAVITY_ACCELERATION  # Much stronger gravity
     assert raindrop.max_upward_velocity < raindrop.max_velocity_magnitude  # Upward speed should be less than downward
     assert raindrop.color == DEFAULT_COLOR
     assert raindrop.width == DEFAULT_WIDTH
@@ -49,7 +49,7 @@ def test_raindrop_initialization(raindrop):
     assert hasattr(raindrop, 'check_and_handle_collisions')
     assert hasattr(raindrop, 'apply_repulsion_force')
     assert isinstance(raindrop.colliding_objects, set)
-    assert raindrop.repulsion_force >= raindrop.acceleration.y  # Repulsion should be at least as strong as gravity
+    assert raindrop.repulsion_force == REPULSION_FORCE
 
 def test_raindrop_update(raindrop):
     initial_x = raindrop.x
