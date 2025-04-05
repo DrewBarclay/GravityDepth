@@ -11,12 +11,12 @@ class RainDrop(GameObject):
         self.velocity = Vector2(wind_force, 200.0)
         self.acceleration = Vector2(0, 8000.0)  # Much stronger gravity
         self.wind_acceleration = Vector2(0, 0)  # Wind will be applied as acceleration
-        self.max_speed = 400.0  # Max speed for any motion
-        self.max_upward_speed = 200.0  # Max speed when moving upward
+        self.max_speed = 400.0  # Limited to original max speed
+        self.max_upward_speed = 200.0  # Limited to original max upward speed
         self.length = random.uniform(5, 15)
         self.width = 1
         self.color = (255, 0, 0)
-        self.repulsion_force = 300.0  # Increased repulsion force
+        self.repulsion_force = 10000.0  # Gravity (8000) plus moderate boost (2000)
         self.marked_for_removal = False
         # Keep track of objects we're currently colliding with
         self.colliding_objects = set()
