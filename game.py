@@ -23,6 +23,8 @@ class Player(GameObject):
         super().__init__(x, y, 40, 40)  # Fixed size for now
         self.movement_speed = 300  # pixels per second
         self.set_property('type', 'player')  # For custom rendering
+        self.marked_for_removal = False  # Add marked_for_removal attribute
+        self.color = (0, 0, 255)  # Blue color for the player
 
     def handle_input(self, keys: pygame.key.ScancodeWrapper) -> None:
         """Handle player input"""
@@ -38,6 +40,10 @@ class Player(GameObject):
             self.acceleration.y = -self.movement_speed
         if keys[pygame.K_DOWN]:
             self.acceleration.y = self.movement_speed
+
+    def draw(self, surface: pygame.Surface) -> None:
+        """Draw the player on the screen"""
+        pygame.draw.rect(surface, self.color, self.get_rect())
 
 def main():
     print("Starting game")

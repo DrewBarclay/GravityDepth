@@ -2,6 +2,7 @@ import pygame
 from typing import List, Dict, Type, Optional
 from game_object import GameObject
 from renderer import Renderer
+from rain_system import RainSystem
 
 class GameEngine:
     """Basic game engine for managing game objects and game state"""
@@ -12,6 +13,9 @@ class GameEngine:
         self.running = False
         self.game_objects: List[GameObject] = []
         self.last_time = 0
+
+        # Initialize rain system
+        self.rain_system = RainSystem(width, height)
 
     def add_object(self, obj: GameObject) -> None:
         """Add a game object to the engine"""
@@ -24,13 +28,26 @@ class GameEngine:
 
     def update(self, dt: float) -> None:
         """Update all game objects"""
-        for obj in self.game_objects:
-            obj.update(dt)
+        for obj in self.game_objects[:]:  # Copy list to allow removal during iteration
+            if obj.marked_for_removal:
+                self.remove_object(obj)
+            else:
+                obj.update(dt)
+
+        # Update rain system
+        self.rain_system.update(dt, self.game_objects)
 
     def draw(self) -> None:
         """Draw all game objects"""
         self.renderer.clear()
-        self.renderer.draw_game_objects(self.game_objects)
+
+        # Draw game objects
+        for obj in self.game_objects:
+            obj.draw(self.renderer.get_screen())
+
+        # Draw rain
+        self.rain_system.draw(self.renderer.get_screen())
+
         self.renderer.update()
 
     def handle_events(self) -> bool:
@@ -38,6 +55,15 @@ class GameEngine:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return False
+                elif event.key == pygame.K_LEFT:
+                    self.rain_system.set_wind_force(-2.0)  # Wind left
+                elif event.key == pygame.K_RIGHT:
+                    self.rain_system.set_wind_force(2.0)   # Wind right
+                elif event.key == pygame.K_SPACE:
+                    self.rain_system.set_wind_force(0.0)   # No wind
         return True
 
     def handle_input(self) -> None:

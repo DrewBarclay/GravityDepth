@@ -14,6 +14,9 @@ def test_initialization(player):
     assert player.height == 40
     assert player.movement_speed == 300
     assert player.get_property('type') == 'player'
+    assert hasattr(player, 'marked_for_removal')
+    assert not player.marked_for_removal
+    assert player.color == (0, 0, 255)
 
 def test_input_handling(player, mock_keys):
     """Test player input handling"""
@@ -73,3 +76,16 @@ def test_movement_physics(player):
     # Check that acceleration was reset
     assert player.acceleration.x == 0
     assert player.acceleration.y == 0
+
+def test_draw(player):
+    """Test player drawing"""
+    # Create a surface to draw on
+    surface = pygame.Surface((200, 200))
+
+    # Ensure draw method exists and can be called
+    assert hasattr(player, 'draw')
+    player.draw(surface)
+
+    # Get the color at the player's position
+    color = surface.get_at((100, 100))[:3]  # Ignore alpha channel
+    assert color == player.color
