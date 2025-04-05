@@ -21,9 +21,6 @@ class GameObject:
         self.x += self.velocity.x * dt
         self.y += self.velocity.y * dt
 
-        # Reset acceleration
-        self.acceleration = pygame.math.Vector2(0, 0)
-
     def apply_force(self, force: pygame.math.Vector2) -> None:
         """Apply a force to the object"""
         self.acceleration += force

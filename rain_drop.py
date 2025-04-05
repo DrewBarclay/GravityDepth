@@ -100,10 +100,6 @@ class RainDrop(GameObject):
             # Add repulsion impulse
             self.velocity += repulsion_impulse
 
-            # Ensure minimum upward velocity after collision
-            if self.velocity.y > -100:  # If not moving up fast enough
-                self.velocity.y = -200   # Strong upward bounce
-
             # Apply speed limits immediately after collision
             self._limit_speed()
 
