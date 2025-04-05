@@ -45,7 +45,7 @@ class GameEngine:
         self.rain_system.update(dt, self.game_objects)
 
         # Update gravity ball system
-        self.gravity_ball_system.update(dt, self.game_objects)
+        self.gravity_ball_system.update(dt, self.game_objects + self.rain_system.raindrops)
 
     def draw(self) -> None:
         """Draw all game objects"""

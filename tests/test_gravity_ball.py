@@ -54,11 +54,11 @@ class TestGravityBall:
         ball.apply_gravity_to_object(obj_near, 0.1)
         ball.apply_gravity_to_object(obj_far, 0.1)
 
-        # Near object should have non-zero acceleration (attraction)
-        assert obj_near.acceleration.length() > 0
+        # Near object should have non-zero velocity (attraction)
+        assert obj_near.velocity.length() > 0
 
-        # Far object should have zero acceleration (no attraction)
-        assert obj_far.acceleration.length() == 0
+        # Far object should have zero velocity (no attraction)
+        assert obj_far.velocity.length() == 0
 
     def test_ignores_tied_objects(self):
         """Test that gravity balls ignore objects that are tied to other objects"""
@@ -124,5 +124,5 @@ class TestGravityBallSystem:
         # Update system with the test object
         system.update(0.1, [obj])
 
-        # Object should have non-zero acceleration (gravity was applied)
-        assert obj.acceleration.length() > 0
+        # Object should have non-zero velocity (gravity was applied)
+        assert obj.velocity.length() > 0

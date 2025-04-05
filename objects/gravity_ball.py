@@ -40,32 +40,26 @@ class GravityBall(GameObject):
             self.marked_for_removal = True
 
     def apply_gravity_to_object(self, obj: GameObject, dt: float) -> None:
-        """Apply a gravitational attraction force to the given object if within range"""
-        # Don't apply gravity to objects that are tied/stuck to other objects
+        """Apply gravitational attraction to an object within range by modifying its velocity directly."""
+        # Skip objects that are tied to something else
         if hasattr(obj, 'tied_to') and obj.tied_to is not None:
             return
 
-        # Calculate distance between this gravity ball and the object
-        obj_pos = Vector2(obj.x + obj.width/2, obj.y + obj.height/2)
-        ball_pos = Vector2(self.x + self.radius, self.y + self.radius)
+        # Calculate center positions and direction vector
+        obj_center = Vector2(obj.x + obj.width/2, obj.y + obj.height/2)
+        ball_center = Vector2(self.x + self.radius, self.y + self.radius)
+        direction = ball_center - obj_center
+        distance = direction.length()
 
-        distance_vec = ball_pos - obj_pos
-        distance = distance_vec.length()
-
-        # Only apply force if within attraction radius
+        # Only apply attraction within range
         if distance <= self.attraction_radius and distance > 0:
-            # Calculate force direction (normalized)
-            force_dir = distance_vec.normalize()
+            # Normalize direction and calculate force strength (stronger when closer)
+            direction = direction.normalize()
+            # Use inverse-linear relationship for more predictable attraction
+            strength = self.attraction_force * (1 - (distance / self.attraction_radius)) * dt
 
-            # Inverse square law for gravity (stronger when closer)
-            # We use (attraction_radius - distance) to make force stronger as objects get closer
-            force_strength = self.attraction_force * (1 - (distance / self.attraction_radius)) * dt
-
-            # Create the force vector
-            force = force_dir * force_strength
-
-            # Apply the force to the object
-            obj.apply_force(force)
+            # Apply attraction directly to velocity
+            obj.velocity += direction * strength
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the gravity ball with a glow effect"""
