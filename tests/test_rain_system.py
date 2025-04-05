@@ -29,7 +29,7 @@ def test_raindrop_initialization(raindrop):
     assert raindrop.velocity.y == 200.0
     assert raindrop.velocity.x == 0.0  # No initial wind
     assert raindrop.acceleration == Vector2(0, 8000.0)  # Much stronger gravity
-    assert raindrop.max_upward_speed < raindrop.max_speed  # Upward speed should be less than downward
+    assert raindrop.max_upward_velocity < raindrop.max_velocity_magnitude  # Upward speed should be less than downward
     assert raindrop.color == (255, 0, 0)
     assert raindrop.width == 1
     assert 5 <= raindrop.length <= 15
@@ -58,14 +58,31 @@ def test_raindrop_update(raindrop):
 def test_raindrop_max_speed(raindrop):
     """Test that velocity is properly capped based on direction"""
     # Test downward motion (higher speed cap)
-    raindrop.velocity = Vector2(0, raindrop.max_speed * 2)
-    raindrop._limit_speed()
-    assert abs(raindrop.velocity.length() - raindrop.max_speed) < 0.01
+    initial_velocity = raindrop.velocity.copy()
+    # Apply a large force that would normally exceed the max speed
+    force = Vector2(0, raindrop.max_velocity_magnitude * 2)
 
-    # Test upward motion (lower speed cap)
-    raindrop.velocity = Vector2(0, -raindrop.max_speed)
-    raindrop._limit_speed()
-    assert abs(raindrop.velocity.length() - raindrop.max_upward_speed) < 0.01
+    # Test force limiting
+    raindrop._limit_applied_force(force)
+
+    # Apply the force
+    raindrop.velocity += force
+
+    # Velocity should be limited
+    assert raindrop.velocity.length() <= raindrop.max_velocity_magnitude + 0.01  # Allow small floating point error
+
+    # Reset and test upward motion
+    raindrop.velocity = initial_velocity
+    force = Vector2(0, -raindrop.max_velocity_magnitude * 2)
+
+    # Test force limiting
+    raindrop._limit_applied_force(force)
+
+    # Apply the force
+    raindrop.velocity += force
+
+    # Velocity should be limited based on direction
+    assert raindrop.velocity.length() <= raindrop.max_upward_velocity + 0.01  # Allow small floating point error
 
 def test_raindrop_repulsion(raindrop):
     other = TestGameObject(120, 100)  # Place the other object slightly to the right
@@ -76,7 +93,7 @@ def test_raindrop_repulsion(raindrop):
 
     # Velocity should change due to repulsion
     assert raindrop.velocity != initial_velocity
-    assert raindrop.velocity.length() <= raindrop.max_speed
+    assert raindrop.velocity.length() <= raindrop.max_velocity_magnitude + 0.01  # Allow small floating point error
     # Velocity should have a component pointing away from the object
     # Since the object is to the right, velocity should have negative x component
     assert raindrop.velocity.x < 0
@@ -253,7 +270,7 @@ def test_raindrop_collision_and_gravity_cycle(raindrop):
 
     # Immediately after collision - should be moving upward
     assert raindrop.velocity.y < 0, "Should bounce upward after collision"
-    assert abs(raindrop.velocity.y) <= raindrop.max_upward_speed, "Should respect upward speed limit"
+    assert abs(raindrop.velocity.y) <= raindrop.max_upward_velocity + 0.01, "Should respect upward speed limit"
 
     # Record the upward velocity
     upward_velocity = raindrop.velocity.y
@@ -274,4 +291,4 @@ def test_raindrop_collision_and_gravity_cycle(raindrop):
     raindrop.update(0.016)
     final_velocity = raindrop.velocity.y
     assert final_velocity > 0, "Should continue moving downward"
-    assert final_velocity <= raindrop.max_speed, "Should respect downward speed limit"
+    assert final_velocity <= raindrop.max_velocity_magnitude, "Should respect downward speed limit"

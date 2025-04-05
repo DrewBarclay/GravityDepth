@@ -11,8 +11,8 @@ class RainDrop(GameObject):
         self.velocity = Vector2(wind_force, 200.0)
         self.acceleration = Vector2(0, 8000.0)  # Much stronger gravity
         self.wind_acceleration = Vector2(0, 0)  # Wind will be applied as acceleration
-        self.max_speed = 400.0  # Limited to original max speed
-        self.max_upward_speed = 200.0  # Limited to original max upward speed
+        self.max_velocity_magnitude = 400.0  # Max velocity magnitude for limiting forces
+        self.max_upward_velocity = 200.0  # Max upward velocity for limiting forces
         self.length = random.uniform(5, 15)
         self.width = 1
         self.color = (255, 0, 0)
@@ -22,35 +22,53 @@ class RainDrop(GameObject):
         self.colliding_objects = set()
 
     def update(self, dt):
-        # Apply both gravity and wind acceleration
-        total_acceleration = self.acceleration + self.wind_acceleration
+        # Only apply gravity and wind if not colliding with any objects
+        if not self.colliding_objects:
+            # Apply both gravity and wind acceleration
+            total_acceleration = self.acceleration + self.wind_acceleration
 
-        # Apply acceleration with small random variation for more natural motion
-        variation = Vector2(
-            random.uniform(-50, 50),
-            random.uniform(-50, 50)
-        )
-        self.velocity += (total_acceleration + variation) * dt
+            # Apply acceleration with small random variation for more natural motion
+            variation = Vector2(
+                random.uniform(-50, 50),
+                random.uniform(-50, 50)
+            )
 
-        # Apply speed limits based on direction
-        self._limit_speed()
+            # Compute the force to be applied
+            force = (total_acceleration + variation) * dt
+
+            # Limit the force if it would exceed velocity thresholds
+            self._limit_applied_force(force)
+
+            # Apply the force to velocity
+            self.velocity += force
 
         # Update position
         super().update(dt)
 
-    def _limit_speed(self):
-        """Limit speed differently based on direction of motion"""
-        # If moving upward, use stricter speed limit
-        if self.velocity.y < 0:
-            max_allowed = self.max_upward_speed
-        else:
-            max_allowed = self.max_speed
+    def _limit_applied_force(self, force):
+        """
+        Limit the force so it doesn't cause velocity to exceed thresholds.
+        Modifies the force vector in place.
+        """
+        # Predict new velocity after applying force
+        predicted_velocity = self.velocity + force
 
-        speed = self.velocity.length()
-        if speed > max_allowed:
-            scale_factor = max_allowed / speed
-            self.velocity.x *= scale_factor
-            self.velocity.y *= scale_factor
+        # Check if we're going upward (negative y velocity)
+        if predicted_velocity.y < 0:
+            max_allowed = self.max_upward_velocity
+        else:
+            max_allowed = self.max_velocity_magnitude
+
+        # If predicted velocity exceeds the threshold, scale down the force
+        if predicted_velocity.length() > max_allowed:
+            # Calculate what the force should be to exactly reach max velocity
+            target_velocity = predicted_velocity.normalize() * max_allowed
+            # Force should be difference between target and current velocity
+            limited_force = target_velocity - self.velocity
+
+            # Copy the limited force values back to the original force vector
+            force.x = limited_force.x
+            force.y = limited_force.y
 
     def check_and_handle_collisions(self, game_objects, dt):
         # Check each object for collision
@@ -94,14 +112,25 @@ class RainDrop(GameObject):
             random_factor = random.uniform(0.8, 1.2)  # 20% variation
             repulsion_impulse = repulsion_dir * self.repulsion_force * random_factor
 
-            # Scale down current velocity more aggressively
-            self.velocity *= 0.05  # Even more energy loss on collision
+            # Scale down current velocity almost completely to eliminate previous momentum
+            self.velocity *= 0.01  # Nearly complete energy loss on collision
 
-            # Add repulsion impulse
-            self.velocity += repulsion_impulse
+            # Create force vector from impulse
+            force = repulsion_impulse
 
-            # Apply speed limits immediately after collision
-            self._limit_speed()
+            # Limit the force to prevent excessive velocity
+            self._limit_applied_force(force)
+
+            # Apply the limited force
+            self.velocity += force
+
+            # Ensure velocity is actually moving away from the object
+            # Dot product of velocity and repulsion_dir should be positive
+            # for velocity to be moving away from the object
+            dot_product = self.velocity.dot(repulsion_dir)
+            if dot_product < 0:
+                # If velocity is not moving away, reflect it to ensure escape
+                self.velocity = self.velocity.reflect(repulsion_dir)
 
     def handle_collision(self, other):
         # This is for backward compatibility
