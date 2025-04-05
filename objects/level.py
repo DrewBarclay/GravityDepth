@@ -38,8 +38,7 @@ class Level:
                 for _ in range(3):
                     x = random.randint(50, width - 50)
                     y = random.randint(50, height - 150)  # Keep some distance from portal
-                    ball = GravityBall(x, y, radius=15, attraction_radius=0, lifespan=float('inf'))
-                    ball.color = (0, 0, 255)  # Blue
+                    ball = BlueBall(x, y)
                     self.add_object(ball)
             elif self.level_number == 2:
                 # Level 1-2: Two orange squares spread randomly
@@ -95,12 +94,25 @@ class OrangeSquare(GameObject):
         self.color = (255, 165, 0)  # Orange
         self.marked_for_removal = False
 
-    def update(self, dt: float) -> None:
-        """Update square physics"""
-        super().update(dt)
+    # def update(self, dt: float) -> None:
+    #     """Update square physics"""
+    #     super().update(dt)
 
-        # Apply gravity
-        self.apply_force(pygame.math.Vector2(0, 200))
+    def draw(self, surface: pygame.Surface) -> None:
+        """Draw the orange square"""
+        pygame.draw.rect(surface, self.color, (self.x, self.y, self.width, self.height))
+
+class BlueBall(GameObject):
+    """A simple orange square for level 1-2"""
+
+    def __init__(self, x: float, y: float, size: float = 30):
+        super().__init__(x, y, size, size)
+        self.color = (0, 0, 255)  # Orange
+        self.marked_for_removal = False
+
+    # def update(self, dt: float) -> None:
+    #     """Update square physics"""
+    #     super().update(dt)
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the orange square"""
