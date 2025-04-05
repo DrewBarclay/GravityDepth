@@ -67,6 +67,11 @@ class Level:
         self.objects.append(obj)
         self.engine.add_object(obj)
 
+        # Set screen dimensions for wall detection on all objects
+        width, height = self.engine.get_dimensions()
+        obj.screen_width = width
+        obj.screen_height = height
+
     def clear_level(self):
         """Mark all objects for removal to clear the level"""
         for obj in self.objects:
@@ -93,10 +98,14 @@ class OrangeSquare(GameObject):
         super().__init__(x, y, size, size)
         self.color = (255, 165, 0)  # Orange
         self.marked_for_removal = False
+        # Initialize screen dimensions (will be set properly when added to level)
+        self.screen_width = 800
+        self.screen_height = 600
 
-    # def update(self, dt: float) -> None:
-    #     """Update square physics"""
-    #     super().update(dt)
+    def update(self, dt: float) -> None:
+        """Update square physics with wall bouncing"""
+        super().update(dt)
+        self.bounce_off_walls(self.screen_width, self.screen_height)
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the orange square"""
@@ -109,10 +118,14 @@ class BlueBall(GameObject):
         super().__init__(x, y, size, size)
         self.color = (0, 0, 255)  # Orange
         self.marked_for_removal = False
+        # Initialize screen dimensions (will be set properly when added to level)
+        self.screen_width = 800
+        self.screen_height = 600
 
-    # def update(self, dt: float) -> None:
-    #     """Update square physics"""
-    #     super().update(dt)
+    def update(self, dt: float) -> None:
+        """Update ball physics with wall bouncing"""
+        super().update(dt)
+        self.bounce_off_walls(self.screen_width, self.screen_height)
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the orange square"""

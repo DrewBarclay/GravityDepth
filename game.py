@@ -49,25 +49,8 @@ class Player(GameObject):
         # Call the parent class update method to update position
         super().update(dt)
 
-        # Check collision with the left and right walls
-        if self.x <= 0:
-            # Left wall collision
-            self.x = 0
-            self.velocity.x = -self.velocity.x  # Reverse horizontal velocity
-        elif self.x + self.width >= self.screen_width:
-            # Right wall collision
-            self.x = self.screen_width - self.width
-            self.velocity.x = -self.velocity.x  # Reverse horizontal velocity
-
-        # Check collision with the top and bottom walls
-        if self.y <= 0:
-            # Top wall collision
-            self.y = 0
-            self.velocity.y = -self.velocity.y  # Reverse vertical velocity
-        elif self.y + self.height >= self.screen_height:
-            # Bottom wall collision
-            self.y = self.screen_height - self.height
-            self.velocity.y = -self.velocity.y  # Reverse vertical velocity
+        # Use the bounce_off_walls method for wall collisions
+        self.bounce_off_walls(self.screen_width, self.screen_height)
 
     def handle_input(self, keys: pygame.key.ScancodeWrapper) -> None:
         """Handle player input"""

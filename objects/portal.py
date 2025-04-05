@@ -62,6 +62,10 @@ class Portal(GameObject):
         if self.rotation >= 360:
             self.rotation -= 360
 
+        # Apply wall bouncing if the portal has screen dimensions
+        if hasattr(self, 'screen_width') and hasattr(self, 'screen_height'):
+            self.bounce_off_walls(self.screen_width, self.screen_height)
+
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the swirly portal"""
         # Create a surface for the portal

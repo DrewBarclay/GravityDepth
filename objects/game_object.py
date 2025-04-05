@@ -40,6 +40,28 @@ class GameObject:
         self.x += self.velocity.x * dt
         self.y += self.velocity.y * dt
 
+    def bounce_off_walls(self, screen_width: float, screen_height: float) -> None:
+        """Handle wall bouncing for the object"""
+        # Check collision with the left and right walls
+        if self.x <= 0:
+            # Left wall collision
+            self.x = 0
+            self.velocity.x = -self.velocity.x  # Reverse horizontal velocity
+        elif self.x + self.width >= screen_width:
+            # Right wall collision
+            self.x = screen_width - self.width
+            self.velocity.x = -self.velocity.x  # Reverse horizontal velocity
+
+        # Check collision with the top and bottom walls
+        if self.y <= 0:
+            # Top wall collision
+            self.y = 0
+            self.velocity.y = -self.velocity.y  # Reverse vertical velocity
+        elif self.y + self.height >= screen_height:
+            # Bottom wall collision
+            self.y = screen_height - self.height
+            self.velocity.y = -self.velocity.y  # Reverse vertical velocity
+
     def apply_force(self, force: pygame.math.Vector2) -> None:
         """Apply a force to the object"""
         self.acceleration += force

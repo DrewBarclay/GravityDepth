@@ -39,6 +39,10 @@ class GravityBall(GameObject):
         if self.lifetime >= self.lifespan:
             self.marked_for_removal = True
 
+        # Apply wall bouncing if the gravity ball has screen dimensions
+        if hasattr(self, 'screen_width') and hasattr(self, 'screen_height'):
+            self.bounce_off_walls(self.screen_width, self.screen_height)
+
     def apply_gravity_to_object(self, obj: GameObject, dt: float) -> None:
         """Apply gravitational attraction to an object within range by modifying its velocity directly."""
         # Skip objects that are tied to something else
