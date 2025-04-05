@@ -58,12 +58,6 @@ class GameEngine:
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     return False
-                elif event.key == pygame.K_LEFT:
-                    self.rain_system.set_wind_force(-2.0)  # Wind left
-                elif event.key == pygame.K_RIGHT:
-                    self.rain_system.set_wind_force(2.0)   # Wind right
-                elif event.key == pygame.K_SPACE:
-                    self.rain_system.set_wind_force(0.0)   # No wind
         return True
 
     def handle_input(self) -> None:

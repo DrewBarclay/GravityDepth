@@ -20,7 +20,7 @@ BLUE = (0, 0, 255)
 class Player(GameObject):
     """Player class extending the base GameObject"""
     def __init__(self, x: float, y: float):
-        super().__init__(x, y, 40, 40)  # Fixed size for now
+        super().__init__(x, y, 50, 50)  # Fixed size for now
         self.movement_speed = 300  # pixels per second
         self.set_property('type', 'player')  # For custom rendering
         self.marked_for_removal = False  # Add marked_for_removal attribute
@@ -54,7 +54,7 @@ def main():
     # Create player at center of screen
     width, height = engine.get_dimensions()
     print(f"Screen dimensions: {width}x{height}")
-    player = Player(width//2 - 20, height//2 - 20)
+    player = Player(width//2 - 25, height//2 - 25)
     print("Player created")
     engine.add_object(player)
     print("Player added to engine")
