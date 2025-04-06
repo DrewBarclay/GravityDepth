@@ -1,5 +1,6 @@
 import pygame
 import random
+import math
 from typing import List, Optional
 from objects.game_object import GameObject
 from objects.gravity_ball import GravityBall
@@ -152,6 +153,31 @@ class Level:
                     # Remove the projectile
                     projectile.marked_for_removal = True
 
+        # Check for environmental object collisions with players and enemies
+        for obj in self.objects:
+            # Skip non-environmental objects or Portal objects
+            if not (isinstance(obj, BlueBall) or isinstance(obj, OrangeSquare)) or isinstance(obj, Portal):
+                continue
+
+            # Check collisions with players
+            for player in self.players:
+                if obj.collides_with(player):
+                    # Bounce the environmental object off the player
+                    obj.bounce_off_object(player)
+
+                    # Damage the player
+                    if hasattr(player, 'take_damage'):
+                        player.take_damage()
+
+            # Check collisions with enemies
+            for enemy in self.enemies:
+                if obj.collides_with(enemy):
+                    # Bounce the environmental object off the enemy
+                    obj.bounce_off_object(enemy)
+
+                    # Mark the enemy for removal (kill them)
+                    enemy.marked_for_removal = True
+
         # Store enemy count before removal
         prev_enemy_count = len(self.enemies)
 
@@ -164,13 +190,17 @@ class Level:
 
     def clear_level(self):
         """Mark all objects for removal to clear the level"""
+        # Mark all objects for removal except the player
         for obj in self.objects:
-            obj.marked_for_removal = True
+            if obj != self.player:  # Don't mark the player for removal during level transition
+                obj.marked_for_removal = True
+
+        # Clear enemies list but don't clear players list
         self.enemies.clear()
-        self.players.clear()
 
     def next_level(self):
         """Transition to the next level"""
+        # Clear the level without removing player from players list
         self.clear_level()
 
         # Increment level number and possibly world number
@@ -179,10 +209,18 @@ class Level:
             self.level_number = 1
             self.world_number += 1
 
-        # Setup the new level
+        # Get reference to current player to remove it from engine
+        old_player = self.player
+        if old_player:
+            self.engine.remove_object(old_player)
+
+        # Setup the new level with empty lists
         self.objects = []
         self.enemies = []
         self.players = []
+        self.player = None  # Clear player reference so a new one will be created
+
+        # Set up the new level (which will add player, portal, and level objects)
         self.setup_level()
 
 class OrangeSquare(GameObject):
@@ -195,11 +233,36 @@ class OrangeSquare(GameObject):
         # Initialize screen dimensions (will be set properly when added to level)
         self.screen_width = 800
         self.screen_height = 600
+        self.damage = 1  # Amount of damage to deal when colliding
 
     def update(self, dt: float) -> None:
         """Update square physics with wall bouncing"""
         super().update(dt)
         self.bounce_off_walls(self.screen_width, self.screen_height)
+
+    def bounce_off_object(self, other: GameObject) -> None:
+        """Bounce off another object"""
+        # Calculate center points
+        self_center = pygame.math.Vector2(self.x + self.width/2, self.y + self.height/2)
+        other_center = pygame.math.Vector2(other.x + other.width/2, other.y + other.height/2)
+
+        # Calculate bounce direction
+        direction = self_center - other_center
+        if direction.length() > 0:
+            direction = direction.normalize()
+        else:
+            # If centers are at the same position, use a random direction
+            angle = random.uniform(0, 2 * math.pi)
+            direction = pygame.math.Vector2(math.cos(angle), math.sin(angle))
+
+        # Set velocity in the direction away from the collision
+        # Preserve the magnitude of velocity but change direction
+        speed = self.velocity.length()
+        if speed == 0:
+            speed = 100  # Default speed if object was stationary
+
+        # Set the new velocity direction with the original speed
+        self.velocity = direction * speed
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the orange square"""
@@ -215,11 +278,36 @@ class BlueBall(GameObject):
         # Initialize screen dimensions (will be set properly when added to level)
         self.screen_width = 800
         self.screen_height = 600
+        self.damage = 1  # Amount of damage to deal when colliding
 
     def update(self, dt: float) -> None:
         """Update ball physics with wall bouncing"""
         super().update(dt)
         self.bounce_off_walls(self.screen_width, self.screen_height)
+
+    def bounce_off_object(self, other: GameObject) -> None:
+        """Bounce off another object"""
+        # Calculate center points
+        self_center = pygame.math.Vector2(self.x + self.width/2, self.y + self.height/2)
+        other_center = pygame.math.Vector2(other.x + other.width/2, other.y + other.height/2)
+
+        # Calculate bounce direction
+        direction = self_center - other_center
+        if direction.length() > 0:
+            direction = direction.normalize()
+        else:
+            # If centers are at the same position, use a random direction
+            angle = random.uniform(0, 2 * math.pi)
+            direction = pygame.math.Vector2(math.cos(angle), math.sin(angle))
+
+        # Set velocity in the direction away from the collision
+        # Preserve the magnitude of velocity but change direction
+        speed = self.velocity.length()
+        if speed == 0:
+            speed = 100  # Default speed if object was stationary
+
+        # Set the new velocity direction with the original speed
+        self.velocity = direction * speed
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the blue ball"""
