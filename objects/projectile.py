@@ -2,13 +2,14 @@ import pygame
 import math
 from typing import Tuple
 from objects.game_object import GameObject
+from config.game_constants import DEFAULT_PROJECTILE_LIFESPAN
 
 class Projectile(GameObject):
     """A projectile that can be fired by enemies or players"""
 
     def __init__(self, x: float, y: float, velocity: pygame.math.Vector2,
                  radius: float = 5, color: Tuple[int, int, int] = (255, 0, 0),
-                 lifespan: float = 3.0):
+                 lifespan: float = DEFAULT_PROJECTILE_LIFESPAN):
         super().__init__(x, y, radius * 2, radius * 2)
         self.radius = radius
         self.velocity = velocity

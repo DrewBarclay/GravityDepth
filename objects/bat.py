@@ -5,6 +5,16 @@ from typing import List, Optional
 from objects.game_object import GameObject
 from sprites.bat_sprite import BatSprite
 from objects.projectile import Projectile
+from config.game_constants import (
+    BAT_PROJECTILE_LIFESPAN,
+    BAT_ATTACK_COOLDOWN_MIN,
+    BAT_ATTACK_COOLDOWN_MAX,
+    BAT_ATTACK_SPEED,
+    BAT_MOVEMENT_SPEED,
+    BAT_HOVER_AMPLITUDE,
+    BAT_HOVER_FREQUENCY,
+    BAT_PROJECTILE_IMMUNE_TIME
+)
 
 class Bat(GameObject):
     """A bat enemy that shoots projectiles at the player"""
@@ -15,9 +25,9 @@ class Bat(GameObject):
         self.set_collision_polygon(self.bat_sprite.collision_polygon)
 
         # Movement parameters
-        self.movement_speed = 100  # pixels per second
-        self.hover_amplitude = 20  # pixels
-        self.hover_frequency = 2  # oscillations per second
+        self.movement_speed = BAT_MOVEMENT_SPEED
+        self.hover_amplitude = BAT_HOVER_AMPLITUDE
+        self.hover_frequency = BAT_HOVER_FREQUENCY
         self.hover_time = 0
 
         # Horizontal movement parameters
@@ -26,11 +36,11 @@ class Bat(GameObject):
         self.direction_change_interval = random.uniform(2.0, 4.0)  # seconds
 
         # Attack parameters
-        self.attack_cooldown = random.uniform(1.5, 3.0)  # seconds between attacks
+        self.attack_cooldown = random.uniform(BAT_ATTACK_COOLDOWN_MIN, BAT_ATTACK_COOLDOWN_MAX)
         self.attack_timer = random.uniform(0, 1.0)  # start with a random timer
-        self.attack_speed = 150  # projectile speed in pixels per second
+        self.attack_speed = BAT_ATTACK_SPEED
         self.projectiles: List[Projectile] = []
-        self.projectile_lifespan = 30.0  # Make projectiles last much longer (10 seconds)
+        self.projectile_lifespan = BAT_PROJECTILE_LIFESPAN
 
         # Debug mode
         self.debug_mode = False
@@ -39,7 +49,7 @@ class Bat(GameObject):
         self.marked_for_removal = False
 
         # Projectile immunity - don't let bats be hit by their own just-fired projectiles
-        self.projectile_immune_time = 0.2  # seconds of immunity after firing
+        self.projectile_immune_time = BAT_PROJECTILE_IMMUNE_TIME
         self.projectile_immunity_timer = 0
 
     def update(self, dt: float) -> None:
@@ -110,6 +120,8 @@ class Bat(GameObject):
             if self.collides_with(projectile):
                 # Mark projectile for removal
                 projectile.marked_for_removal = True
+                # Mark bat for removal too
+                self.marked_for_removal = True
 
     def find_target_player(self, players: List[GameObject]) -> Optional[GameObject]:
         """Find a player on the same vertical level as the bat"""
@@ -141,7 +153,7 @@ class Bat(GameObject):
         """Create a projectile aimed at the player"""
         # Reset attack timer
         self.attack_timer = 0
-        self.attack_cooldown = random.uniform(1.5, 3.0)  # Randomize next attack time
+        self.attack_cooldown = random.uniform(BAT_ATTACK_COOLDOWN_MIN, BAT_ATTACK_COOLDOWN_MAX)
 
         # Set projectile immunity temporarily
         self.projectile_immunity_timer = self.projectile_immune_time
@@ -173,7 +185,7 @@ class Bat(GameObject):
             bat_center_x - 5,  # Offset by projectile radius
             bat_center_y - 5,  # Offset by projectile radius
             pygame.math.Vector2(dx, dy),
-            lifespan=self.projectile_lifespan  # Use the longer lifespan
+            lifespan=self.projectile_lifespan
         )
 
         # Set the screen dimensions for the projectile

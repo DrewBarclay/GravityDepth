@@ -4,6 +4,7 @@ import math
 from objects.bat import Bat
 from objects.game_object import GameObject
 from objects.projectile import Projectile
+from config.game_constants import BAT_PROJECTILE_LIFESPAN
 
 # Setup pygame for testing
 pygame.init()
@@ -24,7 +25,7 @@ def test_bat_initialization():
     assert bat.y == 100
     assert not bat.marked_for_removal
     assert len(bat.projectiles) == 0
-    assert bat.projectile_lifespan == 10.0  # Check the longer lifespan is set
+    assert bat.projectile_lifespan == BAT_PROJECTILE_LIFESPAN  # Check lifespan using the constant
 
 def test_bat_update():
     """Test that the bat updates position correctly"""
@@ -142,7 +143,7 @@ def test_bat_shoot_at_player_lifespan():
 
     # Verify projectile has the correct lifespan
     projectile = bat.projectiles[0]
-    assert projectile.lifespan == bat.projectile_lifespan
+    assert projectile.lifespan == BAT_PROJECTILE_LIFESPAN
 
     # Verify projectile has velocity
     assert projectile.velocity.length() > 0  # Should have some velocity
@@ -299,7 +300,6 @@ def test_projectile_cleanup():
 def test_projectile_lifespan():
     """Test that projectiles respect their extended lifespan"""
     bat = Bat(100, 100)
-    bat.projectile_lifespan = 10.0  # Set to 10 seconds
     player = MockPlayer(200, 100)
 
     # Set screen dimensions
@@ -312,15 +312,16 @@ def test_projectile_lifespan():
 
     # Verify the projectile has the correct lifespan
     projectile = bat.projectiles[0]
-    assert projectile.lifespan == 10.0
+    assert projectile.lifespan == BAT_PROJECTILE_LIFESPAN
 
-    # Update projectile for 9.8 seconds (not enough to expire)
-    projectile.lifetime = 9.8
+    # Update projectile for almost the full lifespan (not enough to expire)
+    almost_expired_time = BAT_PROJECTILE_LIFESPAN - 0.2
+    projectile.lifetime = almost_expired_time
     projectile.update(0.1)
     assert not projectile.marked_for_removal
 
-    # Update past the 10 second mark (should expire)
-    projectile.update(0.3)  # Add 0.3 more seconds to reach 10.2
+    # Update past the lifespan mark (should expire)
+    projectile.update(0.3)  # Add 0.3 more seconds to exceed the lifespan
     assert projectile.marked_for_removal
 
 def test_projectile_bat_collision():
@@ -349,13 +350,15 @@ def test_projectile_bat_collision():
     # Make sure it's not colliding yet
     bat2.check_projectile_collisions([projectile])
     assert not projectile.marked_for_removal
+    assert not bat2.marked_for_removal
 
     # Move projectile to collide with bat2
     projectile.x = bat2.x  # Position it at bat2's location
 
-    # Now check collision - should mark projectile for removal
+    # Now check collision - should mark both projectile and bat2 for removal
     bat2.check_projectile_collisions([projectile])
     assert projectile.marked_for_removal
+    assert bat2.marked_for_removal, "Bat should be marked for removal when hit by a projectile"
 
     # Test projectile immunity - bat shouldn't destroy its own projectiles
     bat1.projectile_immunity_timer = 0  # Ensure no immunity
@@ -373,3 +376,5 @@ def test_projectile_bat_collision():
 
     # The projectile should not be marked for removal
     assert not projectile2.marked_for_removal
+    # The bat should not be marked for removal by its own projectile
+    assert not bat1.marked_for_removal

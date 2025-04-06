@@ -130,6 +130,9 @@ class Level:
                     # For now, just remove the projectile
                     projectile.marked_for_removal = True
 
+        # Remove any bats that have been marked for removal
+        self.enemies = [enemy for enemy in self.enemies if not enemy.marked_for_removal]
+
     def clear_level(self):
         """Mark all objects for removal to clear the level"""
         for obj in self.objects:
