@@ -6,7 +6,8 @@ from utils.advanced_polygon_utils import create_circle_polygon
 class BatSprite:
     """Class for generating and rendering a bat sprite"""
 
-    def __init__(self, width: int = 40, height: int = 30, color: Tuple[int, int, int] = (80, 40, 100)):
+    def __init__(self, width: int = 50, height: int = 38, color: Tuple[int, int, int] = (80, 40, 100)):
+        # Increased width from 40 to 50 and height from 30 to 38 (25% increase)
         self.width = width
         self.height = height
         self.color = color
@@ -48,21 +49,21 @@ class BatSprite:
         pygame.draw.ellipse(surface, (0, 0, 0), body_rect)
 
         # Draw wings - completely black now
-        # Left wing
+        # Left wing - Make wings wider
         left_wing_points = [
             (body_x, body_y + body_height // 2),  # Connect to body
-            (body_x - self.width * 0.25, body_y + body_height * 0.2),  # Wing tip upper
-            (body_x - self.width * 0.3, body_y + body_height * 0.5),  # Wing tip middle
-            (body_x - self.width * 0.25, body_y + body_height * 0.8),  # Wing tip lower
+            (body_x - self.width * 0.35, body_y + body_height * 0.2),  # Wing tip upper - wider
+            (body_x - self.width * 0.4, body_y + body_height * 0.5),  # Wing tip middle - wider
+            (body_x - self.width * 0.35, body_y + body_height * 0.8),  # Wing tip lower - wider
         ]
         pygame.draw.polygon(surface, (0, 0, 0), left_wing_points)
 
-        # Right wing
+        # Right wing - Make wings wider
         right_wing_points = [
             (body_x + body_width, body_y + body_height // 2),  # Connect to body
-            (body_x + body_width + self.width * 0.25, body_y + body_height * 0.2),  # Wing tip upper
-            (body_x + body_width + self.width * 0.3, body_y + body_height * 0.5),  # Wing tip middle
-            (body_x + body_width + self.width * 0.25, body_y + body_height * 0.8),  # Wing tip lower
+            (body_x + body_width + self.width * 0.35, body_y + body_height * 0.2),  # Wing tip upper - wider
+            (body_x + body_width + self.width * 0.4, body_y + body_height * 0.5),  # Wing tip middle - wider
+            (body_x + body_width + self.width * 0.35, body_y + body_height * 0.8),  # Wing tip lower - wider
         ]
         pygame.draw.polygon(surface, (0, 0, 0), right_wing_points)
 

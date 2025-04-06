@@ -19,7 +19,7 @@ from config.game_constants import (
 class Bat(GameObject):
     """A bat enemy that shoots projectiles at the player"""
 
-    def __init__(self, x: float, y: float, width: int = 40, height: int = 30):
+    def __init__(self, x: float, y: float, width: int = 50, height: int = 38):
         super().__init__(x, y, width, height)
         self.bat_sprite = BatSprite(width=width, height=height)
         self.set_collision_polygon(self.bat_sprite.collision_polygon)
@@ -201,9 +201,48 @@ class Bat(GameObject):
         if self.attack_timer >= self.attack_cooldown:
             target_player = self.find_target_player(players)
 
-            if target_player:
-                # We have a target, shoot at it
-                self.shoot_at_player(target_player)
+            # Fire regardless of vertical player position
+            if players:
+                # Target the first player if we didn't find one on the same level
+                target = target_player if target_player else players[0]
+                self.shoot_at_player(target)
+            else:
+                # If no players found, shoot in a random direction
+                self.shoot_random_direction()
+
+    def shoot_random_direction(self) -> None:
+        """Shoot a projectile in a random direction when no player is found"""
+        # Reset attack timer
+        self.attack_timer = 0
+        self.attack_cooldown = random.uniform(BAT_ATTACK_COOLDOWN_MIN, BAT_ATTACK_COOLDOWN_MAX)
+
+        # Set projectile immunity temporarily
+        self.projectile_immunity_timer = self.projectile_immune_time
+
+        # Calculate center position
+        bat_center_x = self.x + self.width / 2
+        bat_center_y = self.y + self.height / 2
+
+        # Generate a random angle and convert to direction vector
+        angle = random.uniform(0, math.pi * 2)
+        dx = math.cos(angle) * self.attack_speed
+        dy = math.sin(angle) * self.attack_speed
+
+        # Create a projectile with random velocity
+        projectile = Projectile(
+            bat_center_x - 5,  # Offset by projectile radius
+            bat_center_y - 5,  # Offset by projectile radius
+            pygame.math.Vector2(dx, dy),
+            lifespan=self.projectile_lifespan
+        )
+
+        # Set the screen dimensions for the projectile
+        if hasattr(self, 'screen_width') and hasattr(self, 'screen_height'):
+            projectile.screen_width = self.screen_width
+            projectile.screen_height = self.screen_height
+
+        # Add to projectiles list
+        self.projectiles.append(projectile)
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the bat and its projectiles"""
