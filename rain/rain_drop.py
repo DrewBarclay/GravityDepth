@@ -114,6 +114,11 @@ class RainDrop(GameObject):
         # Update position
         super().update(dt)
 
+        # After updating position, if we're tied to an object, ensure we stay within its horizontal bounds
+        # and only allow exiting through the bottom
+        if self.tied_to:
+            self.constrain_to_tied_object()
+
     def _limit_applied_force(self, force):
         """
         Limit the force so it doesn't cause velocity to exceed thresholds.
@@ -138,6 +143,40 @@ class RainDrop(GameObject):
             # Copy the limited force values back to the original force vector
             force.x = limited_force.x
             force.y = limited_force.y
+
+    def constrain_to_tied_object(self):
+        """Ensure raindrop stays within the horizontal bounds of the object it's tied to"""
+        if not self.tied_to:
+            return
+
+        obj = self.tied_to
+        obj_left = obj.x
+        obj_right = obj.x + obj.width
+        obj_bottom = obj.y + obj.height
+
+        # Calculate raindrop center X position
+        raindrop_center_x = self.x + self.width / 2
+
+        # If the raindrop is trying to move outside horizontally, constrain it
+        if raindrop_center_x < obj_left:
+            # Moved outside left edge - constrain and add downward velocity
+            self.x = obj_left - self.width / 2
+            # Increase downward velocity to simulate sliding down
+            self.velocity.y = max(self.velocity.y, 100)
+            # Reduce horizontal velocity
+            self.velocity.x = 0
+        elif raindrop_center_x > obj_right:
+            # Moved outside right edge - constrain and add downward velocity
+            self.x = obj_right - self.width / 2
+            # Increase downward velocity to simulate sliding down
+            self.velocity.y = max(self.velocity.y, 100)
+            # Reduce horizontal velocity
+            self.velocity.x = 0
+
+        # Check if raindrop has exited through the bottom
+        if self.y > obj_bottom:
+            # Allow raindrop to detach and continue falling
+            self.untie_from_object()
 
     def check_and_handle_collisions(self, game_objects, dt):
         # Check each object for collision
@@ -184,7 +223,7 @@ class RainDrop(GameObject):
         self.velocity = Vector2(random.uniform(-20, 20), random.uniform(50, 100))
 
     def get_repulsion_force(self, obj, dt):
-        """Apply a strong repulsion force to exit the object, stronger the deeper inside"""
+        """Apply a repulsion force that primarily directs the raindrop downward along the object's sides"""
         # Calculate direction from object center to raindrop
         obj_center = Vector2(obj.x + obj.width/2, obj.y + obj.height/2)
         my_pos = Vector2(self.x, self.y)
@@ -207,19 +246,41 @@ class RainDrop(GameObject):
             dist_top = self.y - obj_rect.top
             dist_bottom = obj_rect.bottom - self.y
 
-            # Find the minimum distance to an edge (this is the actual depth)
-            depth = min(dist_left, dist_right, dist_top, dist_bottom)
+            # Find the nearest edge
+            nearest_distances = [
+                (dist_left, Vector2(-1, 0), "left"),    # Left edge
+                (dist_right, Vector2(1, 0), "right"),   # Right edge
+                (dist_top, Vector2(0, -1), "top"),      # Top edge
+                (dist_bottom, Vector2(0, 1), "bottom")  # Bottom edge
+            ]
+
+            nearest_dist, nearest_dir, edge_name = min(nearest_distances, key=lambda x: x[0])
+
+            # Modify repulsion direction to favor downward movement:
+            # - For left/right edges: add strong downward component
+            # - For top edge: mostly random horizontal
+            # - For bottom edge: keep normal direction
+
+            if edge_name in ["left", "right"]:
+                # Add a strong downward component when near side edges
+                # 80% downward, 20% outward from the edge
+                repulsion_dir = nearest_dir * 0.2 + Vector2(0, 1) * 0.8
+            elif edge_name == "top":
+                # On top, add some random horizontal movement but mainly downward along sides
+                horiz_component = random.uniform(-0.3, 0.3)  # Random slight horizontal direction
+                # 70% downward, 30% random horizontal
+                repulsion_dir = Vector2(horiz_component, 0.7).normalize()
+            # Bottom edge keeps the natural repulsion direction
 
             # Ensure depth is positive and at least 1.0 for minimum effect
-            depth = max(1.0, depth)
+            depth = max(1.0, nearest_dist)
 
-            # Scale repulsion force based on depth - deeper means stronger force
+            # Scale force based on depth - deeper means stronger force
             depth_multiplier = 1.0 + (depth * DEPTH_REPULSION_MULTIPLIER)
 
-            # Create strong force in the exit direction, scaled by depth
+            # Create force in the modified direction, scaled by depth
             repulsion_force = repulsion_dir * self.repulsion_force * depth_multiplier * dt
 
-            # Apply the repulsion force
             return repulsion_force
         return Vector2(0, 0)
 
