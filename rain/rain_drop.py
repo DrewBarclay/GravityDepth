@@ -301,8 +301,32 @@ class RainDrop(GameObject):
                 # Green when colliding with player
                 draw_color = (0, 255, 0)
             else:
-                # More intense red when colliding with other objects
-                draw_color = (255, 40, 40)
+                # Check if colliding with an enemy object
+                colliding_with_enemy = False
+                for obj in self.colliding_objects:
+                    # Check if the object is an enemy (either has is_enemy=True or type='enemy')
+                    if (hasattr(obj, 'is_enemy') and obj.is_enemy) or \
+                       (hasattr(obj, 'get_property') and obj.get_property('type') == 'enemy'):
+                        colliding_with_enemy = True
+                        break
+
+                if colliding_with_enemy:
+                    # Use regular color for enemies
+                    draw_color = self.color
+                else:
+                    # Check if colliding with an interactable object
+                    colliding_with_interactable = False
+                    for obj in self.colliding_objects:
+                        if hasattr(obj, 'get_property') and obj.get_property('interactable'):
+                            colliding_with_interactable = True
+                            break
+
+                    if colliding_with_interactable:
+                        # Red for interactable objects
+                        draw_color = (255, 40, 40)
+                    else:
+                        # Subtler orange for environmental objects (closer to default red)
+                        draw_color = (255, 70, 20)
         else:
             # Default color when not colliding
             draw_color = self.color

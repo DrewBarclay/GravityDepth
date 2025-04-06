@@ -216,6 +216,14 @@ class GameEngine:
         title_rect = title_text.get_rect(center=(width//2, height//2 - 50))
         screen.blit(title_text, title_rect)
 
+        # Display the level the player reached
+        if self.current_level:
+            level_font = pygame.font.SysFont('Arial', 28)
+            level_text = f"You reached Level {self.current_level.world_number}-{self.current_level.level_number}"
+            level_surface = level_font.render(level_text, True, (255, 255, 255))
+            level_rect = level_surface.get_rect(center=(width//2, height//2))
+            screen.blit(level_surface, level_rect)
+
         # Draw restart button
         mouse_pos = pygame.mouse.get_pos()
         button = self.restart_button

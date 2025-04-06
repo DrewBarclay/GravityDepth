@@ -2,6 +2,7 @@ import pygame
 from objects.game_object import GameObject
 from pygame.math import Vector2
 import math
+import random
 
 class GravityBall(GameObject):
     """A gravity ball that attracts nearby rain and the player"""
@@ -13,8 +14,9 @@ class GravityBall(GameObject):
         self.lifetime = 0
         self.attraction_force = 500  # Force magnitude
         self.marked_for_removal = False
-        self.color = (255, 165, 0)  # Orange color
+        self.color = (0, 180, 0)  # Green color
         self.glow_color = (255, 100, 0, 100)  # Semi-transparent orange for glow effect
+        self.rune_type = random.randint(0, 3)  # Random rune design (0-3)
 
         # Create a circular collision polygon
         self.create_circle_collision()
@@ -82,7 +84,7 @@ class GravityBall(GameObject):
             obj.velocity += direction * strength
 
     def draw(self, surface: pygame.Surface) -> None:
-        """Draw the gravity ball with a glow effect"""
+        """Draw the gravity ball with a glow effect and green rune"""
         # Calculate alpha based on remaining lifetime (fade out effect)
         alpha = int(255 * (1 - (self.lifetime / self.lifespan)))
 
@@ -92,15 +94,78 @@ class GravityBall(GameObject):
                                       min(self.glow_color[3], alpha)),
                           (self.attraction_radius, self.attraction_radius), self.attraction_radius)
 
-        # Draw the actual ball
-        pygame.draw.circle(surface, self.color,
-                          (int(self.x + self.radius), int(self.y + self.radius)),
-                          self.radius)
-
         # Draw the glow
         surface.blit(glow_surf,
                     (int(self.x + self.radius - self.attraction_radius),
                      int(self.y + self.radius - self.attraction_radius)))
+
+        # Center point for drawing
+        center_x = int(self.x + self.radius)
+        center_y = int(self.y + self.radius)
+
+        # Draw dotted green border
+        green_border_color = (0, 200, 0)
+        dots = 20  # Number of dots in the circle
+        for i in range(dots):
+            angle = 2 * math.pi * i / dots
+            dot_x = center_x + int(self.radius * math.cos(angle))
+            dot_y = center_y + int(self.radius * math.sin(angle))
+            pygame.draw.circle(surface, green_border_color, (dot_x, dot_y), 2)
+
+        # Draw the rune based on the type
+        inner_radius = self.radius * 0.7
+
+        if self.rune_type == 0:
+            # Rune type 0: Cross with circle
+            pygame.draw.line(surface, self.color,
+                            (center_x - inner_radius, center_y),
+                            (center_x + inner_radius, center_y), 2)
+            pygame.draw.line(surface, self.color,
+                            (center_x, center_y - inner_radius),
+                            (center_x, center_y + inner_radius), 2)
+            pygame.draw.circle(surface, self.color, (center_x, center_y), int(inner_radius * 0.5), 1)
+
+        elif self.rune_type == 1:
+            # Rune type 1: Triangle
+            pygame.draw.polygon(surface, self.color, [
+                (center_x, center_y - inner_radius),
+                (center_x - inner_radius * 0.866, center_y + inner_radius * 0.5),
+                (center_x + inner_radius * 0.866, center_y + inner_radius * 0.5)
+            ], 2)
+
+        elif self.rune_type == 2:
+            # Rune type 2: Square with diagonals
+            pygame.draw.rect(surface, self.color,
+                            (center_x - inner_radius * 0.7, center_y - inner_radius * 0.7,
+                             inner_radius * 1.4, inner_radius * 1.4), 2)
+            pygame.draw.line(surface, self.color,
+                            (center_x - inner_radius * 0.7, center_y - inner_radius * 0.7),
+                            (center_x + inner_radius * 0.7, center_y + inner_radius * 0.7), 1)
+            pygame.draw.line(surface, self.color,
+                            (center_x + inner_radius * 0.7, center_y - inner_radius * 0.7),
+                            (center_x - inner_radius * 0.7, center_y + inner_radius * 0.7), 1)
+
+        else:
+            # Rune type 3: Circle with inner star
+            pygame.draw.circle(surface, self.color, (center_x, center_y), int(inner_radius * 0.8), 1)
+            points = 5  # Five-pointed star
+            for i in range(points * 2):
+                angle = math.pi/2 + 2 * math.pi * i / (points * 2)
+                radius = inner_radius * (0.4 if i % 2 == 0 else 0.7)
+                point_x = center_x + int(radius * math.cos(angle))
+                point_y = center_y + int(radius * math.sin(angle))
+
+                if i == 0:
+                    last_point = (point_x, point_y)
+                else:
+                    pygame.draw.line(surface, self.color, last_point, (point_x, point_y), 1)
+                    last_point = (point_x, point_y)
+
+            # Connect last point to first
+            first_angle = math.pi/2
+            first_x = center_x + int(inner_radius * 0.4 * math.cos(first_angle))
+            first_y = center_y + int(inner_radius * 0.4 * math.sin(first_angle))
+            pygame.draw.line(surface, self.color, last_point, (first_x, first_y), 1)
 
 
 class GravityBallSystem:
