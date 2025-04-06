@@ -73,15 +73,7 @@ class GravityBall(GameObject):
             # it starts to decrease to simulate entering the "core" of a planet
             core_radius = self.radius * 1.5  # The "core" radius where gravity starts to decrease
 
-            if distance < core_radius:
-                # Inside the core, gravity reduces as you get closer to center
-                # Approaches zero at the very center
-                core_factor = distance / core_radius  # 0 at center, 1 at core boundary
-                strength = self.attraction_force * (1 - (distance / self.attraction_radius)) * core_factor * dt
-            else:
-                # Outside the core, use the original gravity formula
-                strength = self.attraction_force * (1 - (distance / self.attraction_radius)) * dt
-
+            strength = self.attraction_force * dt
             # Apply attraction directly to velocity
             obj.velocity += direction * strength
 
