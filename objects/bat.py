@@ -30,6 +30,7 @@ class Bat(GameObject):
         self.attack_timer = random.uniform(0, 1.0)  # start with a random timer
         self.attack_speed = 150  # projectile speed in pixels per second
         self.projectiles: List[Projectile] = []
+        self.projectile_lifespan = 30.0  # Make projectiles last much longer (10 seconds)
 
         # Debug mode
         self.debug_mode = False
@@ -167,11 +168,12 @@ class Bat(GameObject):
             dx = math.cos(angle) * self.attack_speed
             dy = math.sin(angle) * self.attack_speed
 
-        # Create a projectile with velocity aimed at player
+        # Create a projectile with velocity aimed at player and a longer lifespan
         projectile = Projectile(
             bat_center_x - 5,  # Offset by projectile radius
             bat_center_y - 5,  # Offset by projectile radius
-            pygame.math.Vector2(dx, dy)
+            pygame.math.Vector2(dx, dy),
+            lifespan=self.projectile_lifespan  # Use the longer lifespan
         )
 
         # Set the screen dimensions for the projectile

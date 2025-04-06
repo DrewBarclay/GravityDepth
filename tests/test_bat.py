@@ -24,6 +24,7 @@ def test_bat_initialization():
     assert bat.y == 100
     assert not bat.marked_for_removal
     assert len(bat.projectiles) == 0
+    assert bat.projectile_lifespan == 10.0  # Check the longer lifespan is set
 
 def test_bat_update():
     """Test that the bat updates position correctly"""
@@ -123,6 +124,31 @@ def test_find_target_player():
     # Test with a player that's too far vertically
     target = bat.find_target_player([player2])
     assert target is None
+
+def test_bat_shoot_at_player_lifespan():
+    """Test shooting at a player creates projectiles with the right lifespan"""
+    bat = Bat(100, 100)
+    player = MockPlayer(200, 100)  # Player to the right
+
+    # Set screen dimensions
+    bat.screen_width = 800
+    bat.screen_height = 600
+
+    # Make the bat shoot at the player
+    bat.shoot_at_player(player)
+
+    # Should create a projectile
+    assert len(bat.projectiles) == 1
+
+    # Verify projectile has the correct lifespan
+    projectile = bat.projectiles[0]
+    assert projectile.lifespan == bat.projectile_lifespan
+
+    # Verify projectile has velocity
+    assert projectile.velocity.length() > 0  # Should have some velocity
+
+    # Should be shooting generally towards the player (x component should be positive)
+    assert projectile.velocity.x > 0
 
 def test_bat_shoot_at_player():
     """Test shooting at a player"""
@@ -269,6 +295,33 @@ def test_projectile_cleanup():
     # Update should remove the projectile
     bat.update(0.1)
     assert len(bat.projectiles) == 0
+
+def test_projectile_lifespan():
+    """Test that projectiles respect their extended lifespan"""
+    bat = Bat(100, 100)
+    bat.projectile_lifespan = 10.0  # Set to 10 seconds
+    player = MockPlayer(200, 100)
+
+    # Set screen dimensions
+    bat.screen_width = 800
+    bat.screen_height = 600
+
+    # Make the bat shoot at the player
+    bat.shoot_at_player(player)
+    assert len(bat.projectiles) == 1
+
+    # Verify the projectile has the correct lifespan
+    projectile = bat.projectiles[0]
+    assert projectile.lifespan == 10.0
+
+    # Update projectile for 9.8 seconds (not enough to expire)
+    projectile.lifetime = 9.8
+    projectile.update(0.1)
+    assert not projectile.marked_for_removal
+
+    # Update past the 10 second mark (should expire)
+    projectile.update(0.3)  # Add 0.3 more seconds to reach 10.2
+    assert projectile.marked_for_removal
 
 def test_projectile_bat_collision():
     """Test that projectiles are destroyed when they hit bats (not their source bat)"""
