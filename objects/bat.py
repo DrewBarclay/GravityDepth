@@ -207,8 +207,8 @@ class Bat(GameObject):
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the bat and its projectiles"""
-        # Draw the bat sprite
-        self.bat_sprite.render(surface, (self.x, self.y))
+        # Draw the bat sprite with debug_mode parameter
+        self.bat_sprite.render(surface, (self.x, self.y), self.debug_mode)
 
         # Draw all projectiles
         for projectile in self.projectiles:
@@ -216,9 +216,22 @@ class Bat(GameObject):
 
         # Draw debug info if enabled
         if self.debug_mode:
-            # Draw collision polygon
-            polygon = [(x, y) for x, y in self.collision_polygon]
-            pygame.draw.polygon(surface, (0, 255, 0), polygon, 1)
+            # Get debug polygons with proper position offset
+            debug_polygons = self.bat_sprite.get_debug_polygons((self.x, self.y))
+
+            # Create a semi-transparent surface for fills
+            s = pygame.Surface((surface.get_width(), surface.get_height()), pygame.SRCALPHA)
+
+            # Draw collision polygon with fill and outline
+            pygame.draw.polygon(s, (255, 0, 0, 40), debug_polygons['combined'], 0)  # Fill with transparent red
+            pygame.draw.polygon(surface, (255, 0, 0), debug_polygons['combined'], 2)  # Red outline with thicker line
+
+            # Add the transparent fill to the main surface
+            surface.blit(s, (0, 0))
+
+            # Draw points at each vertex of the combined polygon
+            for point in debug_polygons['combined']:
+                pygame.draw.circle(surface, (0, 255, 0), (int(point[0]), int(point[1])), 3)  # Green dots
 
             # Draw attack range indicator (horizontal line at bat's level)
             pygame.draw.line(

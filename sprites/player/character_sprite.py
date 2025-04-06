@@ -12,7 +12,7 @@ class CharacterSprite:
         self.color = color
         self.hood_color = (50, 50, 90)  # Darker shade for hood
         self.face_color = (20, 20, 30)  # Dark void for face
-        self.eye_color = (255, 0, 0)  # Red glowing eyes
+        self.eye_color = (0, 255, 0)  # Green glowing eyes
         self.surface = self.generate_sprite()
 
         # Generate body and hood polygons separately
@@ -107,7 +107,7 @@ class CharacterSprite:
             glow_radius = eye_radius * (1 + (i * 0.5))
             glow_alpha = 150 - (i * 50)  # Fade the outer glow
             glow_surface = pygame.Surface((glow_radius*2, glow_radius*2), pygame.SRCALPHA)
-            pygame.draw.circle(glow_surface, (255, 0, 0, glow_alpha), (glow_radius, glow_radius), glow_radius)
+            pygame.draw.circle(glow_surface, (0, 255, 0, glow_alpha), (glow_radius, glow_radius), glow_radius)
             surface.blit(glow_surface,
                         (hood_center[0] - eye_distance - glow_radius,
                         eye_y - glow_radius))
@@ -117,14 +117,14 @@ class CharacterSprite:
             glow_radius = eye_radius * (1 + (i * 0.5))
             glow_alpha = 150 - (i * 50)  # Fade the outer glow
             glow_surface = pygame.Surface((glow_radius*2, glow_radius*2), pygame.SRCALPHA)
-            pygame.draw.circle(glow_surface, (255, 0, 0, glow_alpha), (glow_radius, glow_radius), glow_radius)
+            pygame.draw.circle(glow_surface, (0, 255, 0, glow_alpha), (glow_radius, glow_radius), glow_radius)
             surface.blit(glow_surface,
                         (hood_center[0] + eye_distance - glow_radius,
                         eye_y - glow_radius))
 
         # Draw solid eye centers
-        pygame.draw.circle(surface, (255, 0, 0), (hood_center[0] - eye_distance, eye_y), eye_radius)
-        pygame.draw.circle(surface, (255, 0, 0), (hood_center[0] + eye_distance, eye_y), eye_radius)
+        pygame.draw.circle(surface, (0, 255, 0), (hood_center[0] - eye_distance, eye_y), eye_radius)
+        pygame.draw.circle(surface, (0, 255, 0), (hood_center[0] + eye_distance, eye_y), eye_radius)
 
         return surface
 
@@ -154,7 +154,7 @@ class CharacterSprite:
                 glow_radius = eye_radius * (1 + (i * 0.5))
                 glow_alpha = 150 - (i * 50)
                 glow_surface = pygame.Surface((glow_radius*2, glow_radius*2), pygame.SRCALPHA)
-                pygame.draw.circle(glow_surface, (255, 0, 0, glow_alpha), (glow_radius, glow_radius), glow_radius)
+                pygame.draw.circle(glow_surface, (0, 255, 0, glow_alpha), (glow_radius, glow_radius), glow_radius)
 
                 # Left eye
                 surface.blit(glow_surface,
@@ -167,10 +167,10 @@ class CharacterSprite:
                             position[1] + eye_y - glow_radius))
 
             # Draw solid eye centers
-            pygame.draw.circle(surface, (255, 0, 0),
+            pygame.draw.circle(surface, (0, 255, 0),
                               (int(position[0] + hood_center[0] - eye_distance),
                                int(position[1] + eye_y)), eye_radius)
-            pygame.draw.circle(surface, (255, 0, 0),
+            pygame.draw.circle(surface, (0, 255, 0),
                               (int(position[0] + hood_center[0] + eye_distance),
                                int(position[1] + eye_y)), eye_radius)
 

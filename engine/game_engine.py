@@ -259,6 +259,16 @@ class GameEngine:
             return
 
         keys = pygame.key.get_pressed()
+
+        # Handle global debug mode toggle with 'D' key
+        if keys[pygame.K_d] and not getattr(self, '_last_d_state', False):
+            # Toggle debug mode for all objects that have it
+            for obj in self.game_objects:
+                if hasattr(obj, 'debug_mode'):
+                    obj.debug_mode = not obj.debug_mode
+        self._last_d_state = keys[pygame.K_d]
+
+        # Let objects handle their own specific input
         for obj in self.game_objects:
             if hasattr(obj, 'handle_input'):
                 obj.handle_input(keys)

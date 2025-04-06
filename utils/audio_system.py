@@ -45,6 +45,7 @@ class AudioSystem:
                 pygame.mixer.music.load(self.theme_path)
                 pygame.mixer.music.play(loops=loops)
                 self.music_playing = True
+                self.set_music_volume(0.2)
             else:
                 print(f"Error: Theme file not found at {self.theme_path}")
         except pygame.error as e:

@@ -105,11 +105,6 @@ class Player(GameObject):
         if keys[pygame.K_DOWN]:
             self.acceleration.y = self.movement_speed
 
-        # Toggle debug mode with 'D' key
-        if keys[pygame.K_d] and not self._last_d_state:
-            self.debug_mode = not self.debug_mode
-        self._last_d_state = keys[pygame.K_d]
-
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the player on the screen"""
         # Skip drawing if invisible during invulnerability flashing

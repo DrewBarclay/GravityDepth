@@ -43,11 +43,11 @@ class BatSprite:
         body_x = (self.width - body_width) // 2
         body_y = (self.height - body_height) // 2
 
-        # Draw the body (oval)
+        # Draw the body (oval) - completely black now
         body_rect = pygame.Rect(body_x, body_y, body_width, body_height)
-        pygame.draw.ellipse(surface, self.color, body_rect)
+        pygame.draw.ellipse(surface, (0, 0, 0), body_rect)
 
-        # Draw wings
+        # Draw wings - completely black now
         # Left wing
         left_wing_points = [
             (body_x, body_y + body_height // 2),  # Connect to body
@@ -55,7 +55,7 @@ class BatSprite:
             (body_x - self.width * 0.3, body_y + body_height * 0.5),  # Wing tip middle
             (body_x - self.width * 0.25, body_y + body_height * 0.8),  # Wing tip lower
         ]
-        pygame.draw.polygon(surface, self.wing_color, left_wing_points)
+        pygame.draw.polygon(surface, (0, 0, 0), left_wing_points)
 
         # Right wing
         right_wing_points = [
@@ -64,24 +64,41 @@ class BatSprite:
             (body_x + body_width + self.width * 0.3, body_y + body_height * 0.5),  # Wing tip middle
             (body_x + body_width + self.width * 0.25, body_y + body_height * 0.8),  # Wing tip lower
         ]
-        pygame.draw.polygon(surface, self.wing_color, right_wing_points)
+        pygame.draw.polygon(surface, (0, 0, 0), right_wing_points)
 
-        # Draw eyes
+        # Draw glowing red eyes
         eye_radius = int(body_width * 0.2)
         eye_distance = int(body_width * 0.3)
         eye_y = body_y + int(body_height * 0.3)
 
-        # Left eye
+        # Draw glowing eyes with a glow effect
+        for i in range(3):
+            glow_radius = eye_radius * (1 + (i * 0.5))
+            glow_alpha = 150 - (i * 50)  # Fade the outer glow
+
+            # Left eye glow
+            glow_surface = pygame.Surface((glow_radius*2, glow_radius*2), pygame.SRCALPHA)
+            pygame.draw.circle(glow_surface, (255, 0, 0, glow_alpha), (glow_radius, glow_radius), glow_radius)
+            surface.blit(glow_surface,
+                         (body_x + body_width // 2 - eye_distance - glow_radius,
+                          eye_y - glow_radius))
+
+            # Right eye glow
+            glow_surface = pygame.Surface((glow_radius*2, glow_radius*2), pygame.SRCALPHA)
+            pygame.draw.circle(glow_surface, (255, 0, 0, glow_alpha), (glow_radius, glow_radius), glow_radius)
+            surface.blit(glow_surface,
+                         (body_x + body_width // 2 + eye_distance - glow_radius,
+                          eye_y - glow_radius))
+
+        # Solid eye centers
         pygame.draw.circle(surface, self.eye_color,
                           (body_x + body_width // 2 - eye_distance, eye_y),
                           eye_radius)
-
-        # Right eye
         pygame.draw.circle(surface, self.eye_color,
                           (body_x + body_width // 2 + eye_distance, eye_y),
                           eye_radius)
 
-        # Draw small fangs
+        # Draw small fangs - white
         fang_length = int(body_height * 0.2)
 
         # Left fang
@@ -98,9 +115,50 @@ class BatSprite:
 
         return surface
 
-    def render(self, surface: pygame.Surface, position: Tuple[float, float]) -> None:
-        """Render the sprite at the given position"""
-        surface.blit(self.surface, position)
+    def render(self, surface: pygame.Surface, position: Tuple[float, float], debug_mode: bool = False) -> None:
+        """Render the sprite at the given position - only fully show in debug mode"""
+        if debug_mode:
+            surface.blit(self.surface, position)
+        else:
+            # Only draw the eyes when not in debug mode
+            # Extract the body dimensions and eye positions
+            body_width = int(self.width * 0.5)
+            body_height = int(self.height * 0.7)
+            body_x = (self.width - body_width) // 2
+            body_y = (self.height - body_height) // 2
+
+            eye_radius = int(body_width * 0.2)
+            eye_distance = int(body_width * 0.3)
+            eye_y = body_y + int(body_height * 0.3)
+
+            # Draw glowing eyes at the correct world position
+            for i in range(3):
+                glow_radius = eye_radius * (1 + (i * 0.5))
+                glow_alpha = 150 - (i * 50)  # Fade the outer glow
+
+                # Left eye glow
+                glow_surface = pygame.Surface((glow_radius*2, glow_radius*2), pygame.SRCALPHA)
+                pygame.draw.circle(glow_surface, (255, 0, 0, glow_alpha), (glow_radius, glow_radius), glow_radius)
+                surface.blit(glow_surface,
+                            (position[0] + body_x + body_width // 2 - eye_distance - glow_radius,
+                             position[1] + eye_y - glow_radius))
+
+                # Right eye glow
+                glow_surface = pygame.Surface((glow_radius*2, glow_radius*2), pygame.SRCALPHA)
+                pygame.draw.circle(glow_surface, (255, 0, 0, glow_alpha), (glow_radius, glow_radius), glow_radius)
+                surface.blit(glow_surface,
+                            (position[0] + body_x + body_width // 2 + eye_distance - glow_radius,
+                             position[1] + eye_y - glow_radius))
+
+            # Solid eye centers
+            pygame.draw.circle(surface, (255, 0, 0),
+                              (int(position[0] + body_x + body_width // 2 - eye_distance),
+                               int(position[1] + eye_y)),
+                              eye_radius)
+            pygame.draw.circle(surface, (255, 0, 0),
+                              (int(position[0] + body_x + body_width // 2 + eye_distance),
+                               int(position[1] + eye_y)),
+                              eye_radius)
 
     def get_surface(self) -> pygame.Surface:
         """Get the sprite surface"""
