@@ -39,39 +39,53 @@ class Level:
         self.portal = Portal(width//2 - 25, height - 80)
         self.add_object(self.portal)
 
-        # Create level-specific objects
-        if self.world_number == 1:
-            if self.level_number == 1:
-                # Level 1-1: Three blue balls spread randomly
-                for _ in range(3):
-                    x = random.randint(50, width - 50)
-                    y = random.randint(50, height - 150)  # Keep some distance from portal
-                    ball = BlueBall(x, y)
-                    self.add_object(ball)
+        # Add bats based on level number (1 on level 1, 2 on level 2, 3 on level 3+)
+        num_bats = min(self.level_number, 3)  # Cap at 3 bats
+        for i in range(num_bats):
+            # Determine bat position: spread them around the top of the screen
+            bat_x = width // (num_bats + 1) * (i + 1) - 20
+            bat_y = random.randint(50, height // 3)
 
-                # Add two bats to level 1-1
-                # First bat in the upper left area
-                bat1 = Bat(
-                    random.randint(50, width//3),
-                    random.randint(50, height//3)
+            bat = Bat(bat_x, bat_y)
+            self.add_enemy(bat)
+
+        # Add one orange or blue circle to each level
+        # The circle starts with momentum from level 2-1 onwards
+        # Momentum increases with each new level (3-1, 4-1, etc.)
+        if random.choice([True, False]):
+            # Add blue ball
+            x = random.randint(50, width - 50)
+            y = random.randint(50, height - 150)  # Keep some distance from portal
+            ball = BlueBall(x, y)
+
+            # Add momentum if world number > 1 or (world number = 2 and level number >= 1)
+            if self.world_number > 2 or (self.world_number == 2 and self.level_number >= 1):
+                # Base speed increases with world number
+                base_speed = 50 + (self.world_number - 2) * 25
+                angle = random.uniform(0, 2 * math.pi)
+                ball.velocity = pygame.math.Vector2(
+                    math.cos(angle) * base_speed,
+                    math.sin(angle) * base_speed
                 )
-                self.add_enemy(bat1)
 
-                # Second bat in the upper right area
-                bat2 = Bat(
-                    random.randint(2*width//3, width - 90),
-                    random.randint(50, height//3)
+            self.add_object(ball)
+        else:
+            # Add orange square
+            x = random.randint(50, width - 50)
+            y = random.randint(50, height - 150)
+            square = OrangeSquare(x, y)
+
+            # Add momentum if world number > 1 or (world number = 2 and level number >= 1)
+            if self.world_number > 2 or (self.world_number == 2 and self.level_number >= 1):
+                # Base speed increases with world number
+                base_speed = 50 + (self.world_number - 2) * 25
+                angle = random.uniform(0, 2 * math.pi)
+                square.velocity = pygame.math.Vector2(
+                    math.cos(angle) * base_speed,
+                    math.sin(angle) * base_speed
                 )
-                self.add_enemy(bat2)
 
-            elif self.level_number == 2:
-                # Level 1-2: Two orange squares spread randomly
-                for _ in range(2):
-                    x = random.randint(50, width - 50)
-                    y = random.randint(50, height - 150)
-                    square = OrangeSquare(x, y)
-                    self.add_object(square)
-            # Level 3+ are empty except for player and portal
+            self.add_object(square)
 
         # Store initial enemy count for progress calculation
         self.initial_enemy_count = len(self.enemies)
