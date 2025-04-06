@@ -5,6 +5,7 @@ from engine.renderer import Renderer
 from rain.rain_system import RainSystem
 from objects.gravity_ball import GravityBallSystem
 from objects.portal import Portal
+from utils.audio_system import AudioSystem
 
 class GameEngine:
     """Basic game engine for managing game objects and game state"""
@@ -21,6 +22,9 @@ class GameEngine:
 
         # Initialize gravity ball system
         self.gravity_ball_system = GravityBallSystem()
+
+        # Initialize audio system
+        self.audio_system = AudioSystem()
 
         # Mouse state variables
         self.mouse_pressed = False
@@ -69,6 +73,10 @@ class GameEngine:
 
         # Reset game over state
         self.game_over = False
+
+        # Restart music if it's not playing
+        if not self.audio_system.is_music_playing():
+            self.audio_system.play_music()
 
     def update(self, dt: float) -> None:
         """Update all game objects"""
@@ -260,6 +268,10 @@ class GameEngine:
         self.running = True
         self.last_time = pygame.time.get_ticks()
 
+        # Start background music
+        self.audio_system.generate_theme()
+        self.audio_system.play_music()
+
         while self.running:
             # Calculate delta time
             current_time = pygame.time.get_ticks()
@@ -281,6 +293,8 @@ class GameEngine:
             # Cap the frame rate
             self.clock.tick(60)
 
+        # Stop the music when the game ends
+        self.audio_system.stop_music()
         pygame.quit()
 
     def get_screen(self) -> pygame.Surface:
