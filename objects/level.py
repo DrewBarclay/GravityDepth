@@ -5,6 +5,7 @@ from objects.game_object import GameObject
 from objects.gravity_ball import GravityBall
 from sprites.player.character_sprite import CharacterSprite
 from objects.portal import Portal
+from objects.bat import Bat
 
 class Level:
     """Manages a game level and the objects in it"""
@@ -16,6 +17,8 @@ class Level:
         self.objects: List[GameObject] = []
         self.player = None
         self.portal = None
+        self.enemies: List[GameObject] = []
+        self.players: List[GameObject] = []
 
         # Set up the level
         self.setup_level()
@@ -26,6 +29,7 @@ class Level:
 
         # Create the player
         self.player = self.create_player(width//2 - 25, height//2 - 25)
+        self.players.append(self.player)
 
         # Create portal at the bottom middle of the screen
         self.portal = Portal(width//2 - 25, height - 80)
@@ -40,6 +44,22 @@ class Level:
                     y = random.randint(50, height - 150)  # Keep some distance from portal
                     ball = BlueBall(x, y)
                     self.add_object(ball)
+
+                # Add two bats to level 1-1
+                # First bat in the upper left area
+                bat1 = Bat(
+                    random.randint(50, width//3),
+                    random.randint(50, height//3)
+                )
+                self.add_enemy(bat1)
+
+                # Second bat in the upper right area
+                bat2 = Bat(
+                    random.randint(2*width//3, width - 90),
+                    random.randint(50, height//3)
+                )
+                self.add_enemy(bat2)
+
             elif self.level_number == 2:
                 # Level 1-2: Two orange squares spread randomly
                 for _ in range(2):
@@ -72,10 +92,35 @@ class Level:
         obj.screen_width = width
         obj.screen_height = height
 
+    def add_enemy(self, enemy: GameObject):
+        """Add an enemy to the level and track it in the enemies list"""
+        self.enemies.append(enemy)
+        self.add_object(enemy)
+
+    def update(self, dt: float):
+        """Update level-specific logic"""
+        # Update enemy AI
+        for enemy in self.enemies:
+            if isinstance(enemy, Bat):
+                enemy.try_attack(self.players)
+
+        # Check for player-projectile collisions
+        for enemy in self.enemies:
+            if isinstance(enemy, Bat):
+                for projectile in enemy.projectiles[:]:  # Use a copy of the list to safely remove while iterating
+                    for player in self.players:
+                        if projectile.collides_with(player):
+                            # Handle player hit by projectile
+                            # For now, just remove the projectile
+                            projectile.marked_for_removal = True
+                            break
+
     def clear_level(self):
         """Mark all objects for removal to clear the level"""
         for obj in self.objects:
             obj.marked_for_removal = True
+        self.enemies.clear()
+        self.players.clear()
 
     def next_level(self):
         """Transition to the next level"""
@@ -89,6 +134,8 @@ class Level:
 
         # Setup the new level
         self.objects = []
+        self.enemies = []
+        self.players = []
         self.setup_level()
 
 class OrangeSquare(GameObject):
@@ -112,11 +159,11 @@ class OrangeSquare(GameObject):
         pygame.draw.rect(surface, self.color, (self.x, self.y, self.width, self.height))
 
 class BlueBall(GameObject):
-    """A simple orange square for level 1-2"""
+    """A simple blue ball for level 1-1"""
 
     def __init__(self, x: float, y: float, size: float = 30):
         super().__init__(x, y, size, size)
-        self.color = (0, 0, 255)  # Orange
+        self.color = (0, 0, 255)  # Blue
         self.marked_for_removal = False
         # Initialize screen dimensions (will be set properly when added to level)
         self.screen_width = 800
@@ -128,5 +175,7 @@ class BlueBall(GameObject):
         self.bounce_off_walls(self.screen_width, self.screen_height)
 
     def draw(self, surface: pygame.Surface) -> None:
-        """Draw the orange square"""
-        pygame.draw.rect(surface, self.color, (self.x, self.y, self.width, self.height))
+        """Draw the blue ball"""
+        pygame.draw.circle(surface, self.color,
+                          (int(self.x + self.width/2), int(self.y + self.height/2)),
+                          int(self.width/2))

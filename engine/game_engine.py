@@ -52,6 +52,9 @@ class GameEngine:
                 # Player has entered the portal, go to next level
                 self.current_level.next_level()
 
+            # Update level-specific logic
+            self.current_level.update(dt)
+
         # Process removals and updates
         for obj in objects_to_process:
             if obj.marked_for_removal:
