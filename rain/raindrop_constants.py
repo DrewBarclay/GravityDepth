@@ -12,7 +12,7 @@ DEFAULT_COLOR = (255, 0, 0)
 # Repulsion should be at least as strong as gravity
 REPULSION_FORCE = 100
 # Damping factor applied to velocity during collision
-RAIN_COLLISION_FRICTION = 10
+RAIN_COLLISION_FRICTION = 200
 # Multiplier for increasing repulsion based on depth inside object
 DEPTH_REPULSION_MULTIPLIER = 10.0
 # Friction coefficient for air

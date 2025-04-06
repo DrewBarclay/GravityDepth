@@ -8,7 +8,7 @@ class RainSystem:
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.raindrops = []
-        self.spawn_rate = 140
+        self.spawn_rate = 280
         self.spawn_timer = 0
         self.wind_force = 0
         self.wind_change_timer = 0
