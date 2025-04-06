@@ -2,6 +2,7 @@ import pygame
 import os
 import random
 import math
+import tempfile
 from typing import List, Optional, Dict
 
 class AudioSystem:
@@ -23,8 +24,13 @@ class AudioSystem:
         # Theme music path
         self.theme_path = os.path.join(self.assets_dir, 'theme.wav')
 
+        # Rain sound path - will be generated at startup
+        self.rain_path = os.path.join(self.audio_dir, 'rain_ambient.wav')
+
         # State tracking
         self.music_playing = False
+        self.rain_ambience_playing = False
+        self.rain_ambience_channel = None
 
         # Sound effect cache
         self.sound_effects: Dict[str, pygame.mixer.Sound] = {}
@@ -67,6 +73,69 @@ class AudioSystem:
         game_over_sound = pygame.mixer.Sound(buffer=self._generate_game_over_sound())
         game_over_sound.set_volume(0.5)
         self.sound_effects['game_over'] = game_over_sound
+
+        # 6. Rain ambience sound - load/generate once at startup
+        self._initialize_rain_ambience()
+
+    def _initialize_rain_ambience(self) -> None:
+        """Initialize rain ambience by loading from file or using a simple fallback"""
+        # Try to load the rain sound file
+        try:
+            if os.path.exists(self.rain_path):
+                rain_ambience = pygame.mixer.Sound(self.rain_path)
+                rain_ambience.set_volume(0.25)
+                self.sound_effects['rain_ambience'] = rain_ambience
+                print("Rain ambience sound loaded from file")
+            else:
+                # If file doesn't exist, use the simple fallback
+                print("Rain sound file not found, using fallback sound")
+                rain_ambience = pygame.mixer.Sound(buffer=self._generate_simple_rain_sound())
+                rain_ambience.set_volume(0.25)
+                self.sound_effects['rain_ambience'] = rain_ambience
+        except pygame.error as e:
+            print(f"Error loading rain sound: {e}")
+            # Fallback to simpler rain sound if loading fails
+            print("Using fallback simple rain sound")
+            rain_ambience = pygame.mixer.Sound(buffer=self._generate_simple_rain_sound())
+            rain_ambience.set_volume(0.25)
+            self.sound_effects['rain_ambience'] = rain_ambience
+
+    def _generate_simple_rain_sound(self) -> bytes:
+        """Generate a simple version of rain sound for fallback"""
+        sample_rate = 22050  # Lower sample rate for faster generation
+        duration = 5.0
+        samples = int(sample_rate * duration)
+
+        # Create a buffer with signed 16-bit samples
+        buffer = bytearray(samples * 2)
+
+        # Simple filtered noise for rain
+        last_value = 0
+        alpha = 0.1  # Simple low-pass filter constant
+
+        for i in range(samples):
+            t = i / sample_rate
+
+            # Simple noise with filtering
+            noise = random.uniform(-1, 1)
+            filtered = alpha * noise + (1 - alpha) * last_value
+            last_value = filtered
+
+            # Add some variations
+            intensity = 0.7 + 0.3 * math.sin(2 * math.pi * 0.2 * t)
+            value = int(32767 * 0.7 * filtered * intensity)
+
+            # Apply fade in/out
+            if t < 0.3:
+                value = int(value * (t / 0.3))
+            elif t > duration - 0.3:
+                value = int(value * ((duration - t) / 0.3))
+
+            # Convert to 16-bit signed PCM
+            buffer[i*2] = value & 0xFF
+            buffer[i*2+1] = (value >> 8) & 0xFF
+
+        return bytes(buffer)
 
     def _generate_player_hit_sound(self) -> bytes:
         """Generate a sound for when player gets hit"""
@@ -254,10 +323,14 @@ class AudioSystem:
         except pygame.error as e:
             print(f"Error playing music: {e}")
 
+        # Start rain ambience on a different channel
+        self.play_rain_ambience()
+
     def stop_music(self) -> None:
         """Stop the currently playing music"""
         pygame.mixer.music.stop()
         self.music_playing = False
+        self.stop_rain_ambience()
 
     def is_music_playing(self) -> bool:
         """Check if music is currently playing"""
@@ -266,6 +339,42 @@ class AudioSystem:
     def set_music_volume(self, volume: float) -> None:
         """Set the music volume (0.0 to 1.0)"""
         pygame.mixer.music.set_volume(volume)
+
+    def play_rain_ambience(self, loops: int = -1) -> None:
+        """Play the rain ambience sound on a separate channel"""
+        if 'rain_ambience' not in self.sound_effects:
+            return
+
+        # Use a dedicated channel for the rain sound
+        try:
+            self.rain_ambience_channel = pygame.mixer.Channel(7)  # Use channel 7 for rain (0-7 available by default)
+
+            if self.rain_ambience_channel and not self.rain_ambience_playing:
+                print("Starting rain ambience...")
+                self.rain_ambience_channel.play(self.sound_effects['rain_ambience'], loops=loops)
+                self.rain_ambience_playing = True
+        except pygame.error as e:
+            print(f"Error playing rain ambience: {e}")
+            # Try to use a different channel if channel 7 is not available
+            try:
+                fallback_channel = pygame.mixer.find_channel()
+                if fallback_channel:
+                    fallback_channel.play(self.sound_effects['rain_ambience'], loops=loops)
+                    self.rain_ambience_channel = fallback_channel
+                    self.rain_ambience_playing = True
+            except:
+                print("Could not find any available channel for rain ambience.")
+
+    def stop_rain_ambience(self) -> None:
+        """Stop the rain ambience sound"""
+        if self.rain_ambience_channel:
+            self.rain_ambience_channel.stop()
+            self.rain_ambience_playing = False
+
+    def set_rain_ambience_volume(self, volume: float) -> None:
+        """Set the rain ambience volume (0.0 to 1.0)"""
+        if self.rain_ambience_channel:
+            self.rain_ambience_channel.set_volume(volume)
 
     def play_player_hit_sound(self) -> None:
         """Play sound for when player gets hit"""

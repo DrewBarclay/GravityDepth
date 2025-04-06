@@ -43,9 +43,6 @@ class RainDrop(GameObject):
         self.in_gravity_field = False
         # Flag to track if colliding with player
         self.colliding_with_player = False
-        # Track previous collision state for sound effects
-        self.was_colliding_with_player = False
-        self.was_colliding = False
 
         # Set a custom line-shaped collision polygon for the raindrop
         self.set_collision_polygon([
@@ -184,8 +181,6 @@ class RainDrop(GameObject):
     def check_and_handle_collisions(self, game_objects, dt):
         # Check each object for collision
         currently_colliding = set()
-        was_colliding = bool(self.colliding_objects)  # Remember if we were previously colliding
-        was_colliding_with_player = self.colliding_with_player  # Remember if we were colliding with player
         self.colliding_with_player = False  # Reset player collision flag
 
         for obj in game_objects:
@@ -204,33 +199,12 @@ class RainDrop(GameObject):
                 if not self.tied_to:
                     self.tie_to_object(obj)
 
-        # Check for new collisions to play sound effects
-        # Only if we have access to the game engine
-        if hasattr(game_objects[0], 'engine') and hasattr(game_objects[0].engine, 'audio_system'):
-            audio_system = game_objects[0].engine.audio_system
-
-            # New collision with player
-            if self.colliding_with_player and not was_colliding_with_player:
-                # Only play player hit sound if velocity is significant
-                if self.velocity.length() > 100:
-                    audio_system.play_player_hit_sound()
-
-            # New collision with any object, but not player
-            elif currently_colliding and not was_colliding:
-                # Only play environment collision sound if velocity is significant
-                if self.velocity.length() > 200:
-                    audio_system.play_env_collision_sound()
-
         # If we were colliding but aren't anymore, untie
         if self.tied_to and self.tied_to not in currently_colliding:
             self.untie_from_object()
 
         # Update the set of objects we're currently colliding with
         self.colliding_objects = currently_colliding
-
-        # Remember collision state for next frame
-        self.was_colliding = bool(currently_colliding)
-        self.was_colliding_with_player = self.colliding_with_player
 
     def tie_to_object(self, obj):
         """Tie this raindrop to a game object"""

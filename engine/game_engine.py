@@ -78,6 +78,10 @@ class GameEngine:
         if not self.audio_system.is_music_playing():
             self.audio_system.play_music()
 
+        # Ensure rain ambience is playing
+        if not self.audio_system.rain_ambience_playing:
+            self.audio_system.play_rain_ambience()
+
     def update(self, dt: float) -> None:
         """Update all game objects"""
         # Don't update if game is over
