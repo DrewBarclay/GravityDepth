@@ -37,6 +37,10 @@ class Bat(GameObject):
         # Marked for removal flag
         self.marked_for_removal = False
 
+        # Projectile immunity - don't let bats be hit by their own just-fired projectiles
+        self.projectile_immune_time = 0.2  # seconds of immunity after firing
+        self.projectile_immunity_timer = 0
+
     def update(self, dt: float) -> None:
         """Update bat position, hovering movement, and attack cooldown"""
         # Prevent divide by zero
@@ -80,11 +84,31 @@ class Bat(GameObject):
         # Update attack cooldown
         self.attack_timer += dt
 
+        # Update projectile immunity timer
+        if self.projectile_immunity_timer > 0:
+            self.projectile_immunity_timer -= dt
+
         # Update all projectiles
         for projectile in self.projectiles[:]:  # Make a copy of the list to safely remove while iterating
             projectile.update(dt)
             if projectile.marked_for_removal:
                 self.projectiles.remove(projectile)
+
+    def check_projectile_collisions(self, projectiles: List[Projectile]) -> None:
+        """Check collisions with projectiles (from other bats)"""
+        # Skip if we have immunity
+        if self.projectile_immunity_timer > 0:
+            return
+
+        for projectile in projectiles:
+            # Skip our own projectiles
+            if projectile in self.projectiles:
+                continue
+
+            # Check for collision
+            if self.collides_with(projectile):
+                # Mark projectile for removal
+                projectile.marked_for_removal = True
 
     def find_target_player(self, players: List[GameObject]) -> Optional[GameObject]:
         """Find a player on the same vertical level as the bat"""
@@ -117,6 +141,9 @@ class Bat(GameObject):
         # Reset attack timer
         self.attack_timer = 0
         self.attack_cooldown = random.uniform(1.5, 3.0)  # Randomize next attack time
+
+        # Set projectile immunity temporarily
+        self.projectile_immunity_timer = self.projectile_immune_time
 
         # Calculate center positions
         bat_center_x = self.x + self.width / 2

@@ -6,6 +6,7 @@ from objects.gravity_ball import GravityBall
 from sprites.player.character_sprite import CharacterSprite
 from objects.portal import Portal
 from objects.bat import Bat
+from objects.projectile import Projectile
 
 class Level:
     """Manages a game level and the objects in it"""
@@ -19,6 +20,7 @@ class Level:
         self.portal = None
         self.enemies: List[GameObject] = []
         self.players: List[GameObject] = []
+        self.projectiles: List[Projectile] = []  # Track all projectiles separately for easier collision handling
 
         # Set up the level
         self.setup_level()
@@ -97,23 +99,36 @@ class Level:
         self.enemies.append(enemy)
         self.add_object(enemy)
 
+    def collect_all_projectiles(self) -> List[Projectile]:
+        """Gather all projectiles from all bats for collision detection"""
+        all_projectiles = []
+        for enemy in self.enemies:
+            if isinstance(enemy, Bat):
+                all_projectiles.extend(enemy.projectiles)
+        return all_projectiles
+
     def update(self, dt: float):
         """Update level-specific logic"""
-        # Update enemy AI
+        # First, update enemy AI
         for enemy in self.enemies:
             if isinstance(enemy, Bat):
                 enemy.try_attack(self.players)
 
-        # Check for player-projectile collisions
+        # Collect all projectiles for collision detection
+        all_projectiles = self.collect_all_projectiles()
+
+        # Check for projectile-bat collisions
         for enemy in self.enemies:
             if isinstance(enemy, Bat):
-                for projectile in enemy.projectiles[:]:  # Use a copy of the list to safely remove while iterating
-                    for player in self.players:
-                        if projectile.collides_with(player):
-                            # Handle player hit by projectile
-                            # For now, just remove the projectile
-                            projectile.marked_for_removal = True
-                            break
+                enemy.check_projectile_collisions(all_projectiles)
+
+        # Check for player-projectile collisions
+        for player in self.players:
+            for projectile in all_projectiles:
+                if projectile.collides_with(player):
+                    # Handle player hit by projectile
+                    # For now, just remove the projectile
+                    projectile.marked_for_removal = True
 
     def clear_level(self):
         """Mark all objects for removal to clear the level"""

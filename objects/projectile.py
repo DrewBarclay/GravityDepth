@@ -17,6 +17,9 @@ class Projectile(GameObject):
         self.lifetime = 0
         self.marked_for_removal = False
 
+        # Flag to track if this projectile is in a gravity field
+        self.in_gravity_field = False
+
         # Create a circular collision polygon
         self.create_circle_collision()
 
@@ -33,6 +36,9 @@ class Projectile(GameObject):
 
     def update(self, dt: float) -> None:
         """Update projectile position and lifetime"""
+        # Reset the gravity field flag each frame
+        self.in_gravity_field = False
+
         # Update the position using velocity
         self.x += self.velocity.x * dt
         self.y += self.velocity.y * dt
@@ -50,9 +56,19 @@ class Projectile(GameObject):
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the projectile"""
+        # Change color slightly if in gravity field
+        color = self.color
+        if self.in_gravity_field:
+            # Add a bit of orange tint to show it's affected by gravity
+            color = (
+                min(255, self.color[0] + 40),
+                min(255, self.color[1] + 20),
+                self.color[2]
+            )
+
         pygame.draw.circle(
             surface,
-            self.color,
+            color,
             (int(self.x + self.radius), int(self.y + self.radius)),
             int(self.radius)
         )

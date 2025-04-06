@@ -32,6 +32,10 @@ class GravityBall(GameObject):
 
     def update(self, dt: float) -> None:
         """Update gravity ball lifetime"""
+        # Prevent divide by zero
+        if dt <= 0:
+            return
+
         super().update(dt)
 
         # Increment lifetime and mark for removal if expired
@@ -57,7 +61,7 @@ class GravityBall(GameObject):
 
         # Only apply attraction within range
         if distance <= self.attraction_radius and distance > 0:
-            # Set the raindrop's gravity field flag if it's a RainDrop
+            # Set the object's gravity field flag if it has one
             if hasattr(obj, 'in_gravity_field'):
                 obj.in_gravity_field = True
 
@@ -114,8 +118,29 @@ class GravityBallSystem:
         self.gravity_balls.append(ball)
         return ball
 
+    def collect_all_projectiles(self, objects: list) -> list:
+        """Collect projectiles from all entities with projectiles"""
+        projectiles = []
+
+        for obj in objects:
+            # Check if this is an object with projectiles (like Bat)
+            if hasattr(obj, 'projectiles'):
+                projectiles.extend(obj.projectiles)
+
+        return projectiles
+
     def update(self, dt: float, game_objects: list) -> None:
         """Update all gravity balls and apply gravity to objects"""
+        # Prevent divide by zero
+        if dt <= 0:
+            return
+
+        # Collect projectiles from bats or other entities
+        projectiles = self.collect_all_projectiles(game_objects)
+
+        # Add projectiles to game objects for gravity processing
+        all_objects = game_objects + projectiles
+
         for ball in self.gravity_balls[:]:  # Copy list to allow removal during iteration
             # Update the ball
             ball.update(dt)
@@ -126,7 +151,7 @@ class GravityBallSystem:
                 continue
 
             # Apply gravity to all game objects
-            for obj in game_objects:
+            for obj in all_objects:
                 # Skip applying gravity to other gravity balls
                 if isinstance(obj, GravityBall):
                     continue

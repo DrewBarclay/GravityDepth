@@ -3,6 +3,7 @@ import pygame
 import math
 from objects.bat import Bat
 from objects.game_object import GameObject
+from objects.projectile import Projectile
 
 # Setup pygame for testing
 pygame.init()
@@ -268,3 +269,54 @@ def test_projectile_cleanup():
     # Update should remove the projectile
     bat.update(0.1)
     assert len(bat.projectiles) == 0
+
+def test_projectile_bat_collision():
+    """Test that projectiles are destroyed when they hit bats (not their source bat)"""
+    # Create two bats
+    bat1 = Bat(100, 100)
+    bat2 = Bat(300, 100)
+
+    # Set screen dimensions
+    bat1.screen_width = 800
+    bat1.screen_height = 600
+    bat2.screen_width = 800
+    bat2.screen_height = 600
+
+    # Create a projectile aimed at bat2
+    projectile_velocity = pygame.math.Vector2(200, 0)  # Moving right
+    projectile = Projectile(
+        bat1.x + bat1.width/2,
+        bat1.y + bat1.height/2,
+        projectile_velocity
+    )
+
+    # Add it to bat1's projectiles
+    bat1.projectiles.append(projectile)
+
+    # Make sure it's not colliding yet
+    bat2.check_projectile_collisions([projectile])
+    assert not projectile.marked_for_removal
+
+    # Move projectile to collide with bat2
+    projectile.x = bat2.x  # Position it at bat2's location
+
+    # Now check collision - should mark projectile for removal
+    bat2.check_projectile_collisions([projectile])
+    assert projectile.marked_for_removal
+
+    # Test projectile immunity - bat shouldn't destroy its own projectiles
+    bat1.projectile_immunity_timer = 0  # Ensure no immunity
+
+    # Create a new projectile from bat1
+    projectile2 = Projectile(
+        bat1.x + bat1.width/2,
+        bat1.y + bat1.height/2,
+        projectile_velocity
+    )
+    bat1.projectiles.append(projectile2)
+
+    # Check collision with its own projectile
+    bat1.check_projectile_collisions(bat1.projectiles)
+
+    # The projectile should not be marked for removal
+    assert not projectile2.marked_for_removal
