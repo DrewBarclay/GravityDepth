@@ -15,6 +15,9 @@ BAT_PROJECTILE_IMMUNE_TIME = 0.2  # seconds
 
 # Player constants
 PLAYER_SPEED = 200              # pixels per second
+PLAYER_MAX_HEALTH = 3           # player's starting/maximum health
+PLAYER_INVULNERABILITY_TIME = 1.0  # seconds of invulnerability after being hit
+PLAYER_FLASH_INTERVAL = 0.15    # seconds between visibility toggles when hit
 
 # Projectile constants
 DEFAULT_PROJECTILE_LIFESPAN = 3.0  # seconds

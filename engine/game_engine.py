@@ -89,6 +89,48 @@ class GameEngine:
             text_rect = text_surface.get_rect(topright=(self.renderer.width - 20, 20))
             self.renderer.get_screen().blit(text_surface, text_rect)
 
+            # Draw player health bar under the level indicator
+            if self.current_level.player and hasattr(self.current_level.player, 'health'):
+                player = self.current_level.player
+                # Health bar background
+                health_bar_width = 100
+                health_bar_height = 20
+                health_bar_x = self.renderer.width - 20 - health_bar_width
+                health_bar_y = 50  # Position it under the level text
+
+                # Draw background
+                pygame.draw.rect(
+                    self.renderer.get_screen(),
+                    (100, 100, 100),  # Dark gray background
+                    (health_bar_x, health_bar_y, health_bar_width, health_bar_height)
+                )
+
+                # Draw health bar (filled portion)
+                health_percentage = player.health / player.max_health
+                current_health_width = int(health_bar_width * health_percentage)
+
+                # Color changes based on health: green > yellow > red
+                if health_percentage > 0.6:
+                    health_color = (0, 255, 0)  # Green
+                elif health_percentage > 0.3:
+                    health_color = (255, 255, 0)  # Yellow
+                else:
+                    health_color = (255, 0, 0)  # Red
+
+                pygame.draw.rect(
+                    self.renderer.get_screen(),
+                    health_color,
+                    (health_bar_x, health_bar_y, current_health_width, health_bar_height)
+                )
+
+                # Draw health text
+                health_text = f"HP: {player.health}/{player.max_health}"
+                health_text_surface = self.font.render(health_text, True, (255, 255, 255))
+                health_text_rect = health_text_surface.get_rect(
+                    center=(health_bar_x + health_bar_width//2, health_bar_y + health_bar_height//2)
+                )
+                self.renderer.get_screen().blit(health_text_surface, health_text_rect)
+
         self.renderer.update()
 
     def handle_events(self) -> bool:

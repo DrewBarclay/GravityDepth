@@ -145,8 +145,11 @@ class Level:
         for player in self.players:
             for projectile in all_projectiles:
                 if projectile.collides_with(player):
-                    # Handle player hit by projectile
-                    # For now, just remove the projectile
+                    # Call player's take_damage method when hit by projectile
+                    if hasattr(player, 'take_damage'):
+                        player.take_damage()
+
+                    # Remove the projectile
                     projectile.marked_for_removal = True
 
         # Store enemy count before removal

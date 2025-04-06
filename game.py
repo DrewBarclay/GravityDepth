@@ -4,6 +4,7 @@ from objects.game_object import GameObject
 from sprites.player.character_sprite import CharacterSprite
 from utils.advanced_polygon_utils import draw_polygon
 from objects.level import Level
+from config.game_constants import PLAYER_MAX_HEALTH, PLAYER_INVULNERABILITY_TIME, PLAYER_FLASH_INTERVAL
 
 # Initialize Pygame
 pygame.init()
@@ -33,6 +34,16 @@ class Player(GameObject):
         self.color = (0, 0, 255)  # Blue color for the player
         self.character_sprite = CharacterSprite(width=50, height=50)
 
+        # Health properties
+        self.max_health = PLAYER_MAX_HEALTH
+        self.health = self.max_health
+        self.is_invulnerable = False
+        self.invulnerability_time = PLAYER_INVULNERABILITY_TIME
+        self.invulnerability_timer = 0
+        self.flash_interval = PLAYER_FLASH_INTERVAL
+        self.flash_timer = 0
+        self.visible = True  # used for flashing effect
+
         # Use the character sprite's collision polygon
         self.set_collision_polygon(self.character_sprite.collision_polygon)
 
@@ -44,10 +55,37 @@ class Player(GameObject):
         self.screen_width = WINDOW_WIDTH
         self.screen_height = WINDOW_HEIGHT
 
+    def take_damage(self):
+        """Reduce player health when hit by a projectile"""
+        if not self.is_invulnerable:
+            self.health -= 1
+            self.is_invulnerable = True
+            self.invulnerability_timer = self.invulnerability_time
+            self.flash_timer = 0
+            self.visible = False
+
+            if self.health <= 0:
+                # Player is out of health
+                self.marked_for_removal = True
+
     def update(self, dt: float) -> None:
         """Update player physics and handle wall bouncing"""
         # Call the parent class update method to update position
         super().update(dt)
+
+        # Update invulnerability timer
+        if self.is_invulnerable:
+            self.invulnerability_timer -= dt
+
+            # Update flash timer
+            self.flash_timer += dt
+            if self.flash_timer >= self.flash_interval:
+                self.flash_timer = 0
+                self.visible = not self.visible
+
+            if self.invulnerability_timer <= 0:
+                self.is_invulnerable = False
+                self.visible = True
 
         # Use the bounce_off_walls method for wall collisions
         self.bounce_off_walls(self.screen_width, self.screen_height)
@@ -74,6 +112,10 @@ class Player(GameObject):
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the player on the screen"""
+        # Skip drawing if invisible during invulnerability flashing
+        if not self.visible:
+            return
+
         # First draw the character
         self.character_sprite.render(surface, (self.x, self.y))
 
