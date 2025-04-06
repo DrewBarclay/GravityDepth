@@ -8,7 +8,7 @@ class RainSystem:
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.raindrops = []
-        self.spawn_rate = 70  # Increased spawn rate
+        self.spawn_rate = 140
         self.spawn_timer = 0
         self.wind_force = 0
         self.wind_change_timer = 0
@@ -24,8 +24,8 @@ class RainSystem:
 
         # Update spawn timer
         self.spawn_timer += dt
-        if self.spawn_timer >= 1.0 / self.spawn_rate:
-            self.spawn_timer = 0
+        while self.spawn_timer >= 1.0 / self.spawn_rate:
+            self.spawn_timer = max(0, self.spawn_timer - 1.0 / self.spawn_rate)
             self.spawn_raindrop()
 
         # Update all raindrops

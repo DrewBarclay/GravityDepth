@@ -116,8 +116,8 @@ class Player(GameObject):
         if not self.visible:
             return
 
-        # First draw the character
-        self.character_sprite.render(surface, (self.x, self.y))
+        # Draw the character with debug_mode parameter
+        self.character_sprite.render(surface, (self.x, self.y), self.debug_mode)
 
         # Draw collision polygons in debug mode
         if self.debug_mode:
