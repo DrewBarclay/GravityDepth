@@ -154,12 +154,19 @@ class Level:
         # Check for projectile-bat collisions
         for enemy in self.enemies:
             if isinstance(enemy, Bat):
+                for projectile in all_projectiles:
+                    if enemy.collides_with(projectile) and projectile not in enemy.projectiles:
+                        # Play enemy hit sound
+                        self.engine.audio_system.play_enemy_hit_sound()
                 enemy.check_projectile_collisions(all_projectiles)
 
         # Check for player-projectile collisions
         for player in self.players:
             for projectile in all_projectiles:
                 if projectile.collides_with(player):
+                    # Play player hit sound
+                    self.engine.audio_system.play_player_hit_sound()
+
                     # Call player's take_damage method when hit by projectile
                     if hasattr(player, 'take_damage'):
                         player.take_damage()
@@ -176,6 +183,9 @@ class Level:
             # Check collisions with players
             for player in self.players:
                 if obj.collides_with(player):
+                    # Play player hit sound
+                    self.engine.audio_system.play_player_hit_sound()
+
                     # Bounce the environmental object off the player
                     obj.bounce_off_object(player)
 
@@ -186,11 +196,28 @@ class Level:
             # Check collisions with enemies
             for enemy in self.enemies:
                 if obj.collides_with(enemy):
+                    # Play enemy hit sound
+                    self.engine.audio_system.play_enemy_hit_sound()
+
                     # Bounce the environmental object off the enemy
                     obj.bounce_off_object(enemy)
 
                     # Mark the enemy for removal (kill them)
                     enemy.marked_for_removal = True
+
+            # Check collisions with other environmental objects
+            for other_obj in self.objects:
+                # Skip non-environmental objects, Portal objects, and self
+                if (not (isinstance(other_obj, Circle) or isinstance(other_obj, Square))
+                        or isinstance(other_obj, Portal) or other_obj is obj):
+                    continue
+
+                if obj.collides_with(other_obj):
+                    # Play environment collision sound (quiet)
+                    self.engine.audio_system.play_env_collision_sound()
+
+                    # Bounce objects off each other
+                    obj.bounce_off_object(other_obj)
 
         # Store enemy count before removal
         prev_enemy_count = len(self.enemies)
