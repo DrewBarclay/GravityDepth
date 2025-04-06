@@ -93,6 +93,8 @@ class GameEngine:
             portal = self.current_level.portal
 
             if player and portal and portal.enabled and player.collides_with(portal):
+                # Play portal transition sound
+                self.audio_system.play_portal_sound()
                 # Player has entered the portal, go to next level
                 self.current_level.next_level()
 
@@ -101,6 +103,8 @@ class GameEngine:
 
             # Check if player has been removed (died)
             if player and player.marked_for_removal:
+                # Play game over sound
+                self.audio_system.play_game_over_sound()
                 self.game_over = True
                 return
 

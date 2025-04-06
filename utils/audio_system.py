@@ -36,7 +36,9 @@ class AudioSystem:
         self.sound_cooldowns = {
             'player_hit': 0,
             'enemy_hit': 0,
-            'env_collision': 0
+            'env_collision': 0,
+            'portal': 0,
+            'game_over': 0
         }
 
     def _initialize_sound_effects(self) -> None:
@@ -55,6 +57,16 @@ class AudioSystem:
         env_collision = pygame.mixer.Sound(buffer=self._generate_env_collision_sound())
         env_collision.set_volume(0.1)  # Very quiet
         self.sound_effects['env_collision'] = env_collision
+
+        # 4. Portal transition sound - magical ascending tone
+        portal_sound = pygame.mixer.Sound(buffer=self._generate_portal_sound())
+        portal_sound.set_volume(0.4)
+        self.sound_effects['portal'] = portal_sound
+
+        # 5. Game over sound - dramatic downward sweep
+        game_over_sound = pygame.mixer.Sound(buffer=self._generate_game_over_sound())
+        game_over_sound.set_volume(0.5)
+        self.sound_effects['game_over'] = game_over_sound
 
     def _generate_player_hit_sound(self) -> bytes:
         """Generate a sound for when player gets hit"""
@@ -144,6 +156,78 @@ class AudioSystem:
 
         return bytes(buffer)
 
+    def _generate_portal_sound(self) -> bytes:
+        """Generate a magical portal transition sound"""
+        sample_rate = 22050
+        duration = 0.75  # seconds - medium length
+        samples = int(sample_rate * duration)
+
+        # Create a buffer with signed 16-bit samples
+        buffer = bytearray(samples * 2)
+
+        # Generate an ascending magical tone
+        for i in range(samples):
+            t = i / sample_rate
+
+            # Start at 300Hz and rise to 2000Hz with a slight curve
+            freq = 300 + 1700 * (t / duration)**1.5
+
+            # Mix three harmonics with phasing
+            value = int(32767 * 0.7 * (
+                0.6 * math.sin(2 * math.pi * freq * t) +
+                0.3 * math.sin(2 * math.pi * freq * 1.5 * t) +
+                0.1 * math.sin(2 * math.pi * freq * 2 * t + 0.5 * math.sin(3 * t))
+            ))
+
+            # Apply bell-shaped envelope
+            envelope = math.sin(math.pi * t / duration)
+            value = int(value * envelope)
+
+            # Convert to 16-bit signed PCM
+            buffer[i*2] = value & 0xFF
+            buffer[i*2+1] = (value >> 8) & 0xFF
+
+        return bytes(buffer)
+
+    def _generate_game_over_sound(self) -> bytes:
+        """Generate a dramatic game over sound"""
+        sample_rate = 22050
+        duration = 1.2  # seconds - longer for dramatic effect
+        samples = int(sample_rate * duration)
+
+        # Create a buffer with signed 16-bit samples
+        buffer = bytearray(samples * 2)
+
+        # Generate a dramatic descending sound
+        for i in range(samples):
+            t = i / sample_rate
+
+            # Dramatic descending frequency sweep
+            freq = 800 - 700 * (t / duration)**0.6
+
+            # Add intensity with harmonics and noise
+            primary = math.sin(2 * math.pi * freq * t)
+            harmonic1 = 0.3 * math.sin(2 * math.pi * freq * 0.5 * t)
+            harmonic2 = 0.2 * math.sin(2 * math.pi * freq * 0.25 * t)
+
+            # Add some noise that increases over time for dramatic effect
+            noise_amount = 0.1 * (t / duration)**2
+            noise = noise_amount * random.uniform(-1, 1)
+
+            # Combine components
+            combined = 0.8 * primary + harmonic1 + harmonic2 + noise
+
+            # Start loud and then fade
+            envelope = 1.0 if t < 0.1 else math.pow(1.0 - ((t - 0.1) / (duration - 0.1)), 1.2)
+
+            value = int(32767 * combined * envelope)
+
+            # Convert to 16-bit signed PCM
+            buffer[i*2] = value & 0xFF
+            buffer[i*2+1] = (value >> 8) & 0xFF
+
+        return bytes(buffer)
+
     def generate_theme(self) -> None:
         """This method is kept for compatibility, but now we use a pre-generated theme"""
         # Check if theme file exists
@@ -206,3 +290,19 @@ class AudioSystem:
         if current_time - self.sound_cooldowns['env_collision'] > 100:  # 100ms cooldown
             self.sound_effects['env_collision'].play()
             self.sound_cooldowns['env_collision'] = current_time
+
+    def play_portal_sound(self) -> None:
+        """Play sound for portal transition"""
+        # Check cooldown to prevent sound spam
+        current_time = pygame.time.get_ticks()
+        if current_time - self.sound_cooldowns['portal'] > 500:  # 500ms cooldown
+            self.sound_effects['portal'].play()
+            self.sound_cooldowns['portal'] = current_time
+
+    def play_game_over_sound(self) -> None:
+        """Play sound for game over"""
+        # Check cooldown to prevent sound spam
+        current_time = pygame.time.get_ticks()
+        if current_time - self.sound_cooldowns['game_over'] > 1000:  # 1000ms cooldown
+            self.sound_effects['game_over'].play()
+            self.sound_cooldowns['game_over'] = current_time
