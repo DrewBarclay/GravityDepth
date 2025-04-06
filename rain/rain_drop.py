@@ -2,6 +2,7 @@ from objects.game_object import GameObject
 from pygame.math import Vector2
 import random
 import pygame
+import math
 from rain.raindrop_constants import (
     DEFAULT_VELOCITY_Y,
     GRAVITY_ACCELERATION,
@@ -40,6 +41,8 @@ class RainDrop(GameObject):
         self.relative_position = Vector2(0, 0)
         # Flag to track if raindrop is affected by a gravity ball
         self.in_gravity_field = False
+        # Flag to track if colliding with player
+        self.colliding_with_player = False
 
         # Set a custom line-shaped collision polygon for the raindrop
         self.set_collision_polygon([
@@ -139,6 +142,7 @@ class RainDrop(GameObject):
     def check_and_handle_collisions(self, game_objects, dt):
         # Check each object for collision
         currently_colliding = set()
+        self.colliding_with_player = False  # Reset player collision flag
 
         for obj in game_objects:
             if obj is self:
@@ -147,6 +151,10 @@ class RainDrop(GameObject):
             # Use polygon-based collision detection
             if self.collides_with(obj):
                 currently_colliding.add(obj)
+
+                # Check if this is a player object
+                if hasattr(obj, 'get_property') and obj.get_property('type') == 'player':
+                    self.colliding_with_player = True
 
                 # If we're not already tied to an object, tie to this one
                 if not self.tied_to:
@@ -227,12 +235,16 @@ class RainDrop(GameObject):
         )
 
         # Change color based on collision state
-        draw_color = self.color
         if self.colliding_objects:
-            # Brighter red when inside an object
-            draw_color = (255, 100, 100)
-        elif self.tied_to:
-            # Different color when tied to an object
-            draw_color = (150, 150, 255)
+            if self.colliding_with_player:
+                # Green when colliding with player
+                draw_color = (0, 255, 0)
+            else:
+                # More intense red when colliding with other objects
+                draw_color = (255, 40, 40)
+        else:
+            # Default color when not colliding
+            draw_color = self.color
 
+        # Draw the raindrop as a line (original shape)
         pygame.draw.line(surface, draw_color, (int(self.x), int(self.y)), end_pos, self.width)
