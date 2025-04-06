@@ -49,14 +49,14 @@ class Level:
             bat = Bat(bat_x, bat_y)
             self.add_enemy(bat)
 
-        # Add one orange or blue circle to each level
-        # The circle starts with momentum from level 2-1 onwards
+        # Add one circle or square to each level
+        # The shape starts with momentum from level 2-1 onwards
         # Momentum increases with each new level (3-1, 4-1, etc.)
         if random.choice([True, False]):
-            # Add blue ball
+            # Add circle
             x = random.randint(50, width - 50)
             y = random.randint(50, height - 150)  # Keep some distance from portal
-            ball = BlueBall(x, y)
+            ball = Circle(x, y)
 
             # Add momentum if world number > 1 or (world number = 2 and level number >= 1)
             if self.world_number > 2 or (self.world_number == 2 and self.level_number >= 1):
@@ -70,10 +70,10 @@ class Level:
 
             self.add_object(ball)
         else:
-            # Add orange square
+            # Add square
             x = random.randint(50, width - 50)
             y = random.randint(50, height - 150)
-            square = OrangeSquare(x, y)
+            square = Square(x, y)
 
             # Add momentum if world number > 1 or (world number = 2 and level number >= 1)
             if self.world_number > 2 or (self.world_number == 2 and self.level_number >= 1):
@@ -170,7 +170,7 @@ class Level:
         # Check for environmental object collisions with players and enemies
         for obj in self.objects:
             # Skip non-environmental objects or Portal objects
-            if not (isinstance(obj, BlueBall) or isinstance(obj, OrangeSquare)) or isinstance(obj, Portal):
+            if not (isinstance(obj, Circle) or isinstance(obj, Square)) or isinstance(obj, Portal):
                 continue
 
             # Check collisions with players
@@ -237,17 +237,18 @@ class Level:
         # Set up the new level (which will add player, portal, and level objects)
         self.setup_level()
 
-class OrangeSquare(GameObject):
-    """A simple orange square for level 1-2"""
+class Square(GameObject):
+    """A simple square shape for gameplay"""
 
-    def __init__(self, x: float, y: float, size: float = 30):
+    def __init__(self, x: float, y: float, size: float = 37.5):  # 25% larger (30 * 1.25 = 37.5)
         super().__init__(x, y, size, size)
-        self.color = (255, 165, 0)  # Orange
+        self.color = (0, 0, 0)  # Black
         self.marked_for_removal = False
         # Initialize screen dimensions (will be set properly when added to level)
         self.screen_width = 800
         self.screen_height = 600
         self.damage = 1  # Amount of damage to deal when colliding
+        self.debug_mode = False  # Add debug mode flag
 
     def update(self, dt: float) -> None:
         """Update square physics with wall bouncing"""
@@ -279,23 +280,49 @@ class OrangeSquare(GameObject):
         self.velocity = direction * speed
 
     def draw(self, surface: pygame.Surface) -> None:
-        """Draw the orange square"""
-        pygame.draw.rect(surface, self.color, (self.x, self.y, self.width, self.height))
+        """Draw the square"""
+        # In normal mode, draw as black
+        if not self.debug_mode:
+            pygame.draw.rect(surface, self.color, (self.x, self.y, self.width, self.height))
+        else:
+            # In debug mode, draw with fill color and outline
+            # Create a semi-transparent surface for fills
+            s = pygame.Surface((surface.get_width(), surface.get_height()), pygame.SRCALPHA)
 
-class BlueBall(GameObject):
-    """A simple blue ball for level 1-1"""
+            # Draw with transparent yellow fill
+            rect = pygame.Rect(self.x, self.y, self.width, self.height)
+            pygame.draw.rect(s, (200, 200, 0, 40), rect, 0)  # Fill with transparent yellow
+            pygame.draw.rect(surface, (200, 200, 0), rect, 2)  # Yellow outline with 2px width
 
-    def __init__(self, x: float, y: float, size: float = 30):
+            # Add the transparent fill to the main surface
+            surface.blit(s, (0, 0))
+
+            # Draw corner points
+            corners = [
+                (self.x, self.y),  # Top-left
+                (self.x + self.width, self.y),  # Top-right
+                (self.x + self.width, self.y + self.height),  # Bottom-right
+                (self.x, self.y + self.height)  # Bottom-left
+            ]
+
+            for point in corners:
+                pygame.draw.circle(surface, (0, 255, 0), (int(point[0]), int(point[1])), 3)  # Green dots
+
+class Circle(GameObject):
+    """A simple circle shape for gameplay"""
+
+    def __init__(self, x: float, y: float, size: float = 37.5):  # 25% larger (30 * 1.25 = 37.5)
         super().__init__(x, y, size, size)
-        self.color = (0, 0, 255)  # Blue
+        self.color = (0, 0, 0)  # Black
         self.marked_for_removal = False
         # Initialize screen dimensions (will be set properly when added to level)
         self.screen_width = 800
         self.screen_height = 600
         self.damage = 1  # Amount of damage to deal when colliding
+        self.debug_mode = False  # Add debug mode flag
 
     def update(self, dt: float) -> None:
-        """Update ball physics with wall bouncing"""
+        """Update circle physics with wall bouncing"""
         super().update(dt)
         self.bounce_off_walls(self.screen_width, self.screen_height)
 
@@ -324,7 +351,32 @@ class BlueBall(GameObject):
         self.velocity = direction * speed
 
     def draw(self, surface: pygame.Surface) -> None:
-        """Draw the blue ball"""
-        pygame.draw.circle(surface, self.color,
-                          (int(self.x + self.width/2), int(self.y + self.height/2)),
-                          int(self.width/2))
+        """Draw the circle"""
+        center = (int(self.x + self.width/2), int(self.y + self.height/2))
+        radius = int(self.width/2)
+
+        # In normal mode, draw as black
+        if not self.debug_mode:
+            pygame.draw.circle(surface, self.color, center, radius)
+        else:
+            # In debug mode, draw with fill color and outline
+            # Create a semi-transparent surface for fills
+            s = pygame.Surface((surface.get_width(), surface.get_height()), pygame.SRCALPHA)
+
+            # Draw with transparent blue fill
+            pygame.draw.circle(s, (0, 0, 255, 40), center, radius, 0)  # Fill with transparent blue
+            pygame.draw.circle(surface, (0, 0, 255), center, radius, 2)  # Blue outline with 2px width
+
+            # Add the transparent fill to the main surface
+            surface.blit(s, (0, 0))
+
+            # Draw center point
+            pygame.draw.circle(surface, (0, 255, 0), center, 3)  # Green dot
+
+            # Draw a few points along the circumference to visualize the collision boundary
+            num_points = 8
+            for i in range(num_points):
+                angle = 2 * math.pi * i / num_points
+                point_x = center[0] + radius * math.cos(angle)
+                point_y = center[1] + radius * math.sin(angle)
+                pygame.draw.circle(surface, (0, 255, 0), (int(point_x), int(point_y)), 3)  # Green dots

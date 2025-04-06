@@ -1,7 +1,7 @@
 import pytest
 import pygame
 from unittest.mock import MagicMock, patch
-from objects.level import Level, OrangeSquare
+from objects.level import Level, Square, Circle
 from objects.portal import Portal
 from objects.gravity_ball import GravityBall
 from engine.game_engine import GameEngine
