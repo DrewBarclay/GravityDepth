@@ -23,8 +23,11 @@ class TestPortal:
         assert self.portal.width == 50
         assert self.portal.height == 50
 
-        # Check color is red
-        assert self.portal.color == (255, 0, 0)
+        # Check color is blue (portals start blue now)
+        assert self.portal.color == (0, 0, 255)
+
+        # Check portal is disabled by default
+        assert self.portal.enabled == False
 
         # Check portal has a collision polygon
         assert self.portal._collision_polygon is not None
@@ -62,7 +65,13 @@ class TestPortal:
         # Create a test object that will collide with the portal
         test_object = GameObject(100, 100, 30, 30)
 
-        # Check collision detection works
+        # Portal starts disabled, so it should not collide
+        assert not self.portal.collides_with(test_object)
+
+        # Enable the portal
+        self.portal.enable()
+
+        # Now it should collide
         assert self.portal.collides_with(test_object)
 
         # Move object away from portal
@@ -70,3 +79,24 @@ class TestPortal:
 
         # Should no longer collide
         assert not self.portal.collides_with(test_object)
+
+    def test_portal_color_transition(self):
+        """Test that the portal can transition colors"""
+        # Portal starts blue
+        assert self.portal.color == (0, 0, 255)
+
+        # Set target color to red and update
+        self.portal.target_color = (255, 0, 0)
+        self.portal.update(1.0)  # With high transition speed, should change significantly
+
+        # Color should have moved toward red
+        assert self.portal.color[0] > 0  # Red component increased
+        assert self.portal.color[2] < 255  # Blue component decreased
+
+    def test_portal_progress_color(self):
+        """Test that the portal updates color based on progress"""
+        # Test with half progress
+        self.portal.progress_color(0.5)
+
+        # Target color should be halfway between blue and red
+        assert self.portal.target_color == (127, 0, 127)

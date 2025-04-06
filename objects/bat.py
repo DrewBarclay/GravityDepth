@@ -24,6 +24,9 @@ class Bat(GameObject):
         self.bat_sprite = BatSprite(width=width, height=height)
         self.set_collision_polygon(self.bat_sprite.collision_polygon)
 
+        # Flag to identify as an enemy for gravity ball interactions
+        self.is_enemy = True
+
         # Movement parameters
         self.movement_speed = BAT_MOVEMENT_SPEED
         self.hover_amplitude = BAT_HOVER_AMPLITUDE
@@ -112,10 +115,6 @@ class Bat(GameObject):
             return
 
         for projectile in projectiles:
-            # Skip our own projectiles
-            if projectile in self.projectiles:
-                continue
-
             # Check for collision
             if self.collides_with(projectile):
                 # Mark projectile for removal

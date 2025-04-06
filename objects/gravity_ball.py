@@ -53,6 +53,10 @@ class GravityBall(GameObject):
         if hasattr(obj, 'tied_to') and obj.tied_to is not None:
             return
 
+        # Skip applying gravity to enemies (only affect their projectiles)
+        if hasattr(obj, 'is_enemy') and obj.is_enemy:
+            return
+
         # Calculate center positions and direction vector
         obj_center = Vector2(obj.x + obj.width/2, obj.y + obj.height/2)
         ball_center = Vector2(self.x + self.radius, self.y + self.radius)

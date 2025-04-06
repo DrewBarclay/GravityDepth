@@ -48,7 +48,7 @@ class GameEngine:
             player = self.current_level.player
             portal = self.current_level.portal
 
-            if player and portal and player.collides_with(portal):
+            if player and portal and portal.enabled and player.collides_with(portal):
                 # Player has entered the portal, go to next level
                 self.current_level.next_level()
 

@@ -21,6 +21,7 @@ class Level:
         self.enemies: List[GameObject] = []
         self.players: List[GameObject] = []
         self.projectiles: List[Projectile] = []  # Track all projectiles separately for easier collision handling
+        self.initial_enemy_count = 0  # Track initial number of enemies for progress calculation
 
         # Set up the level
         self.setup_level()
@@ -71,6 +72,11 @@ class Level:
                     self.add_object(square)
             # Level 3+ are empty except for player and portal
 
+        # Store initial enemy count for progress calculation
+        self.initial_enemy_count = len(self.enemies)
+        # Initial portal update based on enemies
+        self.update_portal_state()
+
     def create_player(self, x: float, y: float):
         """Create and initialize the player character"""
         from game import Player  # Import here to avoid circular imports
@@ -107,6 +113,19 @@ class Level:
                 all_projectiles.extend(enemy.projectiles)
         return all_projectiles
 
+    def update_portal_state(self):
+        """Update portal state based on remaining enemies"""
+        if not self.portal:
+            return
+
+        if len(self.enemies) == 0 and self.initial_enemy_count > 0:
+            # All enemies are dead
+            self.portal.enable()
+        elif self.initial_enemy_count > 0:
+            # Some enemies still alive, calculate progress
+            progress = 1.0 - (len(self.enemies) / self.initial_enemy_count)
+            self.portal.progress_color(progress)
+
     def update(self, dt: float):
         """Update level-specific logic"""
         # First, update enemy AI
@@ -130,8 +149,15 @@ class Level:
                     # For now, just remove the projectile
                     projectile.marked_for_removal = True
 
+        # Store enemy count before removal
+        prev_enemy_count = len(self.enemies)
+
         # Remove any bats that have been marked for removal
         self.enemies = [enemy for enemy in self.enemies if not enemy.marked_for_removal]
+
+        # Update portal state if enemy count changed
+        if prev_enemy_count != len(self.enemies):
+            self.update_portal_state()
 
     def clear_level(self):
         """Mark all objects for removal to clear the level"""

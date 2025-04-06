@@ -373,8 +373,5 @@ def test_projectile_bat_collision():
 
     # Check collision with its own projectile
     bat1.check_projectile_collisions(bat1.projectiles)
-
-    # The projectile should not be marked for removal
-    assert not projectile2.marked_for_removal
-    # The bat should not be marked for removal by its own projectile
-    assert not bat1.marked_for_removal
+    assert projectile2.marked_for_removal
+    assert bat1.marked_for_removal

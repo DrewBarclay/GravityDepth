@@ -11,8 +11,11 @@ class Portal(GameObject):
         self.marked_for_removal = False
         self.rotation = 0  # Current rotation angle for animation
         self.rotation_speed = 90  # Degrees per second
-        self.color = (255, 0, 0)  # Red
+        self.color = (0, 0, 255)  # Start with blue color
+        self.target_color = (0, 0, 255)  # Target color for transitions
+        self.color_transition_speed = 5.0  # How fast color changes (units per second)
         self.spiral_points = self._generate_spiral_points()
+        self.enabled = False  # Portal starts disabled
 
         # Set a circular collision area
         self._create_collision_polygon()
@@ -53,6 +56,19 @@ class Portal(GameObject):
 
         return points
 
+    def enable(self):
+        """Enable the portal, changing its color to red"""
+        self.enabled = True
+        self.target_color = (255, 0, 0)  # Red
+
+    def progress_color(self, progress: float):
+        """Update portal color based on enemy kill progress (0.0 to 1.0)"""
+        # Interpolate between blue and red based on progress
+        r = int(progress * 255)  # More red as progress increases
+        g = 0
+        b = int(255 * (1 - progress))  # Less blue as progress increases
+        self.target_color = (r, g, b)
+
     def update(self, dt: float) -> None:
         """Update portal animation"""
         super().update(dt)
@@ -62,9 +78,30 @@ class Portal(GameObject):
         if self.rotation >= 360:
             self.rotation -= 360
 
+        # Gradually transition color toward target color
+        for i in range(3):
+            if self.color[i] < self.target_color[i]:
+                self.color = tuple(
+                    self.color[0:i] +
+                    (min(self.color[i] + int(self.color_transition_speed * dt * 255), self.target_color[i]),) +
+                    self.color[i+1:]
+                )
+            elif self.color[i] > self.target_color[i]:
+                self.color = tuple(
+                    self.color[0:i] +
+                    (max(self.color[i] - int(self.color_transition_speed * dt * 255), self.target_color[i]),) +
+                    self.color[i+1:]
+                )
+
         # Apply wall bouncing if the portal has screen dimensions
         if hasattr(self, 'screen_width') and hasattr(self, 'screen_height'):
             self.bounce_off_walls(self.screen_width, self.screen_height)
+
+    def collides_with(self, other: GameObject) -> bool:
+        """Override collision to prevent collisions when disabled"""
+        if not self.enabled:
+            return False
+        return super().collides_with(other)
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the swirly portal"""

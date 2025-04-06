@@ -76,6 +76,29 @@ class TestGravityBall:
         # The tied object should not be affected (zero acceleration)
         assert obj.acceleration.length() == 0
 
+    def test_ignores_enemies(self):
+        """Test that gravity balls ignore enemies (objects with is_enemy=True)"""
+        ball = GravityBall(100, 100, radius=10, attraction_radius=50)
+
+        # Create an enemy object
+        enemy = TestObject(120, 120)
+        enemy.velocity = Vector2(0, 0)
+        enemy.is_enemy = True
+
+        # Create a non-enemy object at the same position for comparison
+        non_enemy = TestObject(120, 120)
+        non_enemy.velocity = Vector2(0, 0)
+
+        # Apply gravity to both objects
+        ball.apply_gravity_to_object(enemy, 0.1)
+        ball.apply_gravity_to_object(non_enemy, 0.1)
+
+        # The enemy should not be affected (zero velocity)
+        assert enemy.velocity.length() == 0
+
+        # The non-enemy should be affected (non-zero velocity)
+        assert non_enemy.velocity.length() > 0
+
 
 class TestGravityBallSystem:
     """Tests for the GravityBallSystem class"""
