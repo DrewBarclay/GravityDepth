@@ -3,7 +3,7 @@ from engine.game_engine import GameEngine
 from objects.game_object import GameObject
 from sprites.player.character_sprite import CharacterSprite
 from utils.advanced_polygon_utils import draw_polygon
-from objects.level import Level
+from objects.level import Level, set_player_class
 from config.game_constants import PLAYER_MAX_HEALTH, PLAYER_INVULNERABILITY_TIME, PLAYER_FLASH_INTERVAL
 
 # Initialize Pygame
@@ -146,6 +146,9 @@ def main():
     # Create game engine
     engine = GameEngine(800, 600, "Level-Based Game")
     print("Game engine created")
+
+    # Register the Player class with the level module to avoid circular imports
+    set_player_class(Player)
 
     # Create the first level (1-1)
     level = Level(engine, 1, 1)

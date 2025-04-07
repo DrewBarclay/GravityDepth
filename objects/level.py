@@ -9,6 +9,14 @@ from objects.portal import Portal
 from objects.bat import Bat
 from objects.projectile import Projectile
 
+# Add Player class reference to fix circular import
+_PlayerClass = None
+
+def set_player_class(player_class):
+    """Set the Player class from outside to avoid circular imports"""
+    global _PlayerClass
+    _PlayerClass = player_class
+
 class Level:
     """Manages a game level and the objects in it"""
 
@@ -97,8 +105,11 @@ class Level:
 
     def create_player(self, x: float, y: float):
         """Create and initialize the player character"""
-        from game import Player  # Import here to avoid circular imports
-        player = Player(x, y)
+        # Use the globally set Player class instead of importing
+        if _PlayerClass is None:
+            raise RuntimeError("Player class not set. Call set_player_class() first.")
+
+        player = _PlayerClass(x, y)
 
         # Set screen dimensions for wall detection
         width, height = self.engine.get_dimensions()
