@@ -139,6 +139,10 @@ class GameEngine:
         # Draw gravity balls
         self.gravity_ball_system.draw(self.renderer.get_screen())
 
+        # Draw level-specific visual effects (like projectile destruction flashes)
+        if self.current_level and hasattr(self.current_level, 'draw'):
+            self.current_level.draw(self.renderer.get_screen())
+
         if self.game_over:
             self.draw_game_over_screen()
         else:

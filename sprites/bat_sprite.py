@@ -6,8 +6,8 @@ from utils.advanced_polygon_utils import create_circle_polygon
 class BatSprite:
     """Class for generating and rendering a bat sprite"""
 
-    def __init__(self, width: int = 50, height: int = 38, color: Tuple[int, int, int] = (80, 40, 100)):
-        # Increased width from 40 to 50 and height from 30 to 38 (25% increase)
+    def __init__(self, width: int = 55, height: int = 42, color: Tuple[int, int, int] = (80, 40, 100)):
+        # Increased width from 50 to 55 and height from 38 to 42 (10% increase)
         self.width = width
         self.height = height
         self.color = color
@@ -31,9 +31,9 @@ class BatSprite:
         all_points.extend(self.right_wing_points)
 
         # Add body points to complete the shape
-        body_x = (self.width - int(self.width * 0.625)) // 2  # Increased body width by 25%
-        body_width = int(self.width * 0.625)  # Increased from 0.5 to 0.625 (25% increase)
-        body_height = int(self.height * 0.875)  # Increased from 0.7 to 0.875 (25% increase)
+        body_x = (self.width - int(self.width * 0.625)) // 2
+        body_width = int(self.width * 0.625)
+        body_height = int(self.height * 0.875)
 
         # Include key body points if not already included
         body_top_left = (body_x, self.height * 0.15)
@@ -53,8 +53,8 @@ class BatSprite:
         surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
 
         # Body dimensions - increased by 25%
-        body_width = int(self.width * 0.625)  # Increased from 0.5 to 0.625
-        body_height = int(self.height * 0.875)  # Increased from 0.7 to 0.875
+        body_width = int(self.width * 0.625)
+        body_height = int(self.height * 0.875)
         body_x = (self.width - body_width) // 2
         body_y = (self.height - body_height) // 2
 
@@ -66,13 +66,13 @@ class BatSprite:
             (body_x, body_y + body_height)
         ]
 
-        # Draw more detailed wings
+        # Draw more detailed wings - wing span increased
         # Left wing with membrane segments
         left_wing_points = [
             (body_x, body_y + body_height * 0.3),  # Upper connection to body
-            (body_x - self.width * 0.35, body_y),  # Upper wing tip
-            (body_x - self.width * 0.4, body_y + body_height * 0.3),  # Middle finger tip
-            (body_x - self.width * 0.35, body_y + body_height * 0.6),  # Lower finger tip
+            (body_x - self.width * 0.38, body_y),  # Upper wing tip - wider
+            (body_x - self.width * 0.44, body_y + body_height * 0.3),  # Middle finger tip - wider
+            (body_x - self.width * 0.38, body_y + body_height * 0.6),  # Lower finger tip - wider
             (body_x, body_y + body_height * 0.7),  # Lower connection to body
         ]
         self.left_wing_points = left_wing_points
@@ -80,9 +80,9 @@ class BatSprite:
         # Right wing with membrane segments
         right_wing_points = [
             (body_x + body_width, body_y + body_height * 0.3),  # Upper connection to body
-            (body_x + body_width + self.width * 0.35, body_y),  # Upper wing tip
-            (body_x + body_width + self.width * 0.4, body_y + body_height * 0.3),  # Middle finger tip
-            (body_x + body_width + self.width * 0.35, body_y + body_height * 0.6),  # Lower finger tip
+            (body_x + body_width + self.width * 0.38, body_y),  # Upper wing tip - wider
+            (body_x + body_width + self.width * 0.44, body_y + body_height * 0.3),  # Middle finger tip - wider
+            (body_x + body_width + self.width * 0.38, body_y + body_height * 0.6),  # Lower finger tip - wider
             (body_x + body_width, body_y + body_height * 0.7),  # Lower connection to body
         ]
         self.right_wing_points = right_wing_points
@@ -110,7 +110,7 @@ class BatSprite:
         pygame.draw.line(surface, (20, 10, 30), right_wing_points[0], right_wing_points[3], 2)  # Lower bone
 
         # Draw glowing red eyes - smaller size
-        eye_radius = int(body_width * 0.12)  # Reduced from 0.2 to 0.12 (40% smaller)
+        eye_radius = int(body_width * 0.12)
         eye_distance = int(body_width * 0.3)
         eye_y = body_y + int(body_height * 0.3)
 
@@ -187,8 +187,8 @@ class BatSprite:
             silhouette = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
 
             # Draw body silhouette
-            body_width = int(self.width * 0.625)  # Increased from 0.5 to 0.625
-            body_height = int(self.height * 0.875)  # Increased from 0.7 to 0.875
+            body_width = int(self.width * 0.625)
+            body_height = int(self.height * 0.875)
             body_x = (self.width - body_width) // 2
             body_y = (self.height - body_height) // 2
             body_rect = pygame.Rect(body_x, body_y, body_width, body_height)
@@ -206,7 +206,7 @@ class BatSprite:
             # Extract the body dimensions and eye positions for eyes
             body_x = (self.width - body_width) // 2
             body_y = (self.height - body_height) // 2
-            eye_radius = int(body_width * 0.12)  # Reduced from 0.2 to 0.12 (40% smaller)
+            eye_radius = int(body_width * 0.12)
             eye_distance = int(body_width * 0.3)
             eye_y = body_y + int(body_height * 0.3)
 

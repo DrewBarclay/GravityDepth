@@ -61,7 +61,7 @@ class AudioSystem:
 
         # 3. Environment collision - low "thud" sound
         env_collision = pygame.mixer.Sound(buffer=self._generate_env_collision_sound())
-        env_collision.set_volume(0.1)  # Very quiet
+        env_collision.set_volume(0.2)  # Increased from 0.05 to be more noticeable
         self.sound_effects['env_collision'] = env_collision
 
         # 4. Portal transition sound - magical ascending tone
@@ -197,26 +197,29 @@ class AudioSystem:
         return bytes(buffer)
 
     def _generate_env_collision_sound(self) -> bytes:
-        """Generate a subtle sound for environment object collisions"""
+        """Generate a distinctive sound for projectile deflection/destruction"""
         sample_rate = 22050
-        duration = 0.15  # seconds - very short
+        duration = 0.2  # slightly longer for more presence
         samples = int(sample_rate * duration)
 
         # Create a buffer with signed 16-bit samples
         buffer = bytearray(samples * 2)
 
-        # Generate a low "thud" sound
+        # Generate a distinctive "zap/ping" sound for projectile deflection
         for i in range(samples):
             t = i / sample_rate
-            # Low frequency for thud
-            freq = 80 + (30 * t / duration)
-            # Simple sine wave with slight distortion
-            value = int(32767 * 0.5 * (
-                0.9 * math.sin(2 * math.pi * freq * t) +
-                0.1 * math.sin(2 * math.pi * freq * 2 * t)
+            # Start with higher frequency and descend quickly for a "ping" effect
+            freq = 600 + 400 * math.exp(-8 * t / duration)
+
+            # Add harmonics and slight phase modulation for more character
+            value = int(32767 * 0.7 * (
+                0.7 * math.sin(2 * math.pi * freq * t) +
+                0.2 * math.sin(2 * math.pi * freq * 2 * t + 0.5 * math.sin(10 * t)) +
+                0.1 * math.sin(2 * math.pi * freq * 3 * t)
             ))
-            # Apply envelope - fast attack, quick decay
-            envelope = min(t * 30, 1.0) * (1.0 - t/duration)**2
+
+            # Apply envelope - quick attack, longer decay for more presence
+            envelope = min(t * 40, 1.0) * math.exp(-5 * t / duration)
             value = int(value * envelope)
 
             # Convert to 16-bit signed PCM

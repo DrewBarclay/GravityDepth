@@ -59,51 +59,82 @@ class GravityBall(GameObject):
         if hasattr(obj, 'is_enemy') and obj.is_enemy:
             return
 
-        # Calculate center positions and direction vector
+        # Calculate centers and boundaries
         obj_center = Vector2(obj.x + obj.width/2, obj.y + obj.height/2)
         ball_center = Vector2(self.x + self.radius, self.y + self.radius)
-        direction = ball_center - obj_center
-        distance = direction.length()
 
-        # Only apply attraction within range
-        if distance <= self.attraction_radius and distance > 0:
+        # Check if the object is within the attraction field using a better distance metric
+        is_in_range = False
+
+        # First, calculate center-to-center distance
+        direction = ball_center - obj_center
+        center_distance = direction.length()
+
+        # If center is within range, object is definitely in range
+        if center_distance <= self.attraction_radius:
+            is_in_range = True
+        else:
+            # If center is outside but we might have partial overlap, do a more detailed check
+            # Create a larger rect representing the attraction area
+            attraction_area_rect = pygame.Rect(
+                self.x + self.radius - self.attraction_radius,
+                self.y + self.radius - self.attraction_radius,
+                self.attraction_radius * 2,
+                self.attraction_radius * 2
+            )
+
+            # Check if object's rect intersects with attraction area
+            obj_rect = obj.get_rect()
+            if attraction_area_rect.colliderect(obj_rect):
+                # For more precise check, find closest point on object to ball center
+                # Clamp ball_center to the bounds of obj_rect
+                closest_x = max(obj_rect.left, min(ball_center.x, obj_rect.right))
+                closest_y = max(obj_rect.top, min(ball_center.y, obj_rect.bottom))
+                closest_point = Vector2(closest_x, closest_y)
+
+                # Check if this closest point is within attraction radius
+                distance_to_closest = (ball_center - closest_point).length()
+                is_in_range = distance_to_closest <= self.attraction_radius
+
+        # Only apply attraction if in range
+        if is_in_range:
             # Set the object's gravity field flag if it has one
             if hasattr(obj, 'in_gravity_field'):
                 obj.in_gravity_field = True
 
-            # Normalize direction and calculate force strength
-            direction = direction.normalize()
+            # Use the center-to-center vector for direction of pull
+            if center_distance > 0:  # Avoid division by zero
+                direction = direction.normalize()
 
-            # Calculate force strength with a modified gravity model
-            # Normal gravity is the same as before, but past a certain point (close to center),
-            # it starts to decrease to simulate entering the "core" of a planet
-            core_radius = self.radius * 1.5  # The "core" radius where gravity starts to decrease
+                # Calculate force strength with a modified gravity model
+                strength = self.attraction_force * dt
 
-            strength = self.attraction_force * dt
-            # Apply attraction directly to velocity
-            obj.velocity += direction * strength
+                # Apply attraction directly to velocity
+                obj.velocity += direction * strength
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the gravity ball with a glow effect and green rune"""
         # Calculate alpha based on remaining lifetime (fade out effect)
         alpha = int(255 * (1 - (self.lifetime / self.lifespan)))
 
-        # Draw attraction radius (semi-transparent circle)
-        glow_surf = pygame.Surface((self.attraction_radius * 2, self.attraction_radius * 2), pygame.SRCALPHA)
-        pygame.draw.circle(glow_surf, (self.glow_color[0], self.glow_color[1], self.glow_color[2],
-                                      min(self.glow_color[3], alpha)),
-                          (self.attraction_radius, self.attraction_radius), self.attraction_radius)
-
-        # Draw the glow
-        surface.blit(glow_surf,
-                    (int(self.x + self.radius - self.attraction_radius),
-                     int(self.y + self.radius - self.attraction_radius)))
-
         # Center point for drawing
         center_x = int(self.x + self.radius)
         center_y = int(self.y + self.radius)
 
-        # Draw dotted green border
+        # Draw dotted green boundary for attraction radius
+        green_boundary_color = (0, 200, 0, min(200, alpha))
+        boundary_dots = 40  # Number of dots in the attraction radius boundary
+        for i in range(boundary_dots):
+            angle = 2 * math.pi * i / boundary_dots
+            dot_x = center_x + int(self.attraction_radius * math.cos(angle))
+            dot_y = center_y + int(self.attraction_radius * math.sin(angle))
+
+            # Create a small surface for the semi-transparent dot
+            dot_surf = pygame.Surface((4, 4), pygame.SRCALPHA)
+            pygame.draw.circle(dot_surf, green_boundary_color, (2, 2), 2)
+            surface.blit(dot_surf, (dot_x - 2, dot_y - 2))
+
+        # Draw dotted green border for the ball itself
         green_border_color = (0, 200, 0)
         dots = 20  # Number of dots in the circle
         for i in range(dots):

@@ -19,7 +19,7 @@ from config.game_constants import (
 class Bat(GameObject):
     """A bat enemy that shoots projectiles at the player"""
 
-    def __init__(self, x: float, y: float, width: int = 50, height: int = 38):
+    def __init__(self, x: float, y: float, width: int = 55, height: int = 42):
         super().__init__(x, y, width, height)
         self.bat_sprite = BatSprite(width=width, height=height)
         self.set_collision_polygon(self.bat_sprite.collision_polygon)

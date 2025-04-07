@@ -24,6 +24,9 @@ class Level:
         self.projectiles: List[Projectile] = []  # Track all projectiles separately for easier collision handling
         self.initial_enemy_count = 0  # Track initial number of enemies for progress calculation
 
+        # Visual effects for projectile destruction
+        self.destruction_flashes = []  # List of [x, y, radius, lifetime]
+
         # Set up the level
         self.setup_level()
 
@@ -155,10 +158,21 @@ class Level:
         for enemy in self.enemies:
             if isinstance(enemy, Bat):
                 for projectile in all_projectiles:
-                    if enemy.collides_with(projectile) and projectile not in enemy.projectiles:
+                    # Skip if bat has projectile immunity
+                    if enemy.projectile_immunity_timer > 0:
+                        continue
+
+                    # Simplified logic: Allow bats to be hit by any projectile
+                    # The immunity timer is enough to protect bats from their own recently fired projectiles
+                    if enemy.collides_with(projectile):
+                        # Mark projectile for removal
+                        projectile.marked_for_removal = True
+                        # Mark bat for removal
+                        enemy.marked_for_removal = True
                         # Play enemy hit sound
                         self.engine.audio_system.play_enemy_hit_sound()
-                enemy.check_projectile_collisions(all_projectiles)
+
+                # We don't need to call check_projectile_collisions anymore as we're handling it above
 
         # Check for player-projectile collisions
         for player in self.players:
@@ -205,6 +219,25 @@ class Level:
                     # Mark the enemy for removal (kill them)
                     enemy.marked_for_removal = True
 
+            # Check collisions with projectiles
+            for projectile in all_projectiles:
+                if obj.collides_with(projectile):
+                    # Play environment collision sound (now louder)
+                    self.engine.audio_system.play_env_collision_sound()
+
+                    # Add a visual flash effect at the projectile's position
+                    projectile_center_x = projectile.x + projectile.radius
+                    projectile_center_y = projectile.y + projectile.radius
+                    self.destruction_flashes.append([
+                        projectile_center_x,
+                        projectile_center_y,
+                        projectile.radius * 2,  # Initial radius of flash
+                        0.2  # Lifetime in seconds
+                    ])
+
+                    # Mark the projectile for removal
+                    projectile.marked_for_removal = True
+
             # Check collisions with other environmental objects
             for other_obj in self.objects:
                 # Skip non-environmental objects, Portal objects, and self
@@ -218,6 +251,12 @@ class Level:
 
                     # Bounce objects off each other
                     obj.bounce_off_object(other_obj)
+
+        # Update destruction flash effects
+        for flash in self.destruction_flashes[:]:
+            flash[3] -= dt  # Decrease lifetime
+            if flash[3] <= 0:
+                self.destruction_flashes.remove(flash)
 
         # Store enemy count before removal
         prev_enemy_count = len(self.enemies)
@@ -263,6 +302,27 @@ class Level:
 
         # Set up the new level (which will add player, portal, and level objects)
         self.setup_level()
+
+    def draw(self, surface: pygame.Surface) -> None:
+        """Draw level-specific visual effects"""
+        # Draw destruction flashes
+        for flash in self.destruction_flashes:
+            x, y, radius, lifetime = flash
+
+            # Calculate alpha based on remaining lifetime (fade out)
+            alpha = int(255 * (lifetime / 0.2))
+
+            # Create a semi-transparent surface for the flash
+            flash_surf = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+
+            # White-blue flash color with fading alpha
+            flash_color = (200, 230, 255, alpha)
+
+            # Draw the flash
+            pygame.draw.circle(flash_surf, flash_color, (radius, radius), radius)
+
+            # Blit to the main surface
+            surface.blit(flash_surf, (x - radius, y - radius))
 
 class Square(GameObject):
     """A simple square shape for gameplay"""
