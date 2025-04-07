@@ -25,16 +25,17 @@ jobs:
         pip install pygame pytest pytest-mock pyinstaller
 
     - name: Build with PyInstaller
+      shell: bash
       run: |
-        pyinstaller --onefile --windowed --name ludum ^
-          --add-data "assets;assets" ^
-          --add-data "audio;audio" ^
-          --add-data "sprites;sprites" ^
-          --add-data "config;config" ^
-          --add-data "engine;engine" ^
-          --add-data "objects;objects" ^
-          --add-data "rain;rain" ^
-          --add-data "utils;utils" ^
+        pyinstaller --onefile --windowed --name ludum \
+          --add-data "assets:assets" \
+          --add-data "audio:audio" \
+          --add-data "sprites:sprites" \
+          --add-data "config:config" \
+          --add-data "engine:engine" \
+          --add-data "objects:objects" \
+          --add-data "rain:rain" \
+          --add-data "utils:utils" \
           game.py
 
     - name: Upload artifacts
