@@ -22,7 +22,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pygame pytest pytest-mock pyinstaller
+        pip install numpy pygame pytest pytest-mock pyinstaller
 
     - name: Build with PyInstaller
       shell: bash
@@ -36,6 +36,7 @@ jobs:
           --add-data "objects:objects" \
           --add-data "rain:rain" \
           --add-data "utils:utils" \
+          --hidden-import numpy \
           game.py
 
     - name: Upload artifacts
