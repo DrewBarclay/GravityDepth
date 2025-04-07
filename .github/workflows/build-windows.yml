@@ -1,0 +1,44 @@
+name: Build Windows Executable
+
+on:
+  workflow_dispatch:  # Manual trigger
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pygame pytest pytest-mock pyinstaller
+
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller --onefile --windowed --name ludum ^
+          --add-data "assets;assets" ^
+          --add-data "audio;audio" ^
+          --add-data "sprites;sprites" ^
+          --add-data "config;config" ^
+          --add-data "engine;engine" ^
+          --add-data "objects;objects" ^
+          --add-data "rain;rain" ^
+          --add-data "utils;utils" ^
+          game.py
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ludum-windows
+        path: dist/ludum.exe

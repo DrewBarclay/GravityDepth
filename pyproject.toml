@@ -7,12 +7,13 @@ readme = "README.md"
 package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.13"
+python = ">=3.12,<3.14"
 pygame = "^2.6.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
 pytest-mock = "^3.14.0"
+pyinstaller = "^6.6.0"
 
 [build-system]
 requires = ["poetry-core"]

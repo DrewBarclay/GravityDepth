@@ -1,0 +1,26 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install required dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    binutils \
+    mingw-w64 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install PyInstaller
+RUN pip install --no-cache-dir pyinstaller
+
+# Install project dependencies
+RUN pip install --no-cache-dir pygame pytest pytest-mock
+
+# Copy the application files
+COPY . .
+
+# Create a spec file suitable for Windows
+RUN echo 'a = Analysis(["game.py"], pathex=[], binaries=[], datas=[("assets", "assets"), ("audio", "audio"), ("sprites", "sprites"), ("config", "config"), ("engine", "engine"), ("objects", "objects"), ("rain", "rain"), ("utils", "utils")], hiddenimports=[], hookspath=[], runtime_hooks=[], excludes=[], win_no_prefer_redirects=False, win_private_assemblies=False, cipher=None, noarchive=False)' > ludum.spec && \
+    echo 'pyz = PYZ(a.pure, a.zipped_data, cipher=None)' >> ludum.spec && \
+    echo 'exe = EXE(pyz, a.scripts, a.binaries, a.zipfiles, a.datas, [], name="ludum", debug=False, bootloader_ignore_signals=False, strip=False, upx=True, upx_exclude=[], runtime_tmpdir=None, console=False, disable_windowed_traceback=False, argv_emulation=False, target_arch=None, codesign_identity=None, entitlements_file=None)' >> ludum.spec
+
+# Run PyInstaller with the spec file
+CMD ["pyinstaller", "--distpath", "/app/dist", "--workpath", "/app/build", "ludum.spec"]
